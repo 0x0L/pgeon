@@ -1,0 +1,4 @@
+AlignAfterOpenBracket: AlwaysBreak
+BreakBeforeBraces: Allman
+ColumnLimit: 88
+IndentWidth: 4
