@@ -1,4 +1,4 @@
-#include "decoders.hpp"
+#include "decoders.h"
 
 #include <libpq-fe.h>
 

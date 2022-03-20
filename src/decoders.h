@@ -2,6 +2,67 @@
 
 #include <arrow/api.h>
 
+#include <map>
+// #include <memory>
+// #include <vector>
+
+namespace pgeon
+{
+class ColumnBuilder
+{
+  public:
+    std::shared_ptr<arrow::ArrayBuilder> InternalBuilder;
+    virtual ~ColumnBuilder(){};
+
+    // General format of a field is
+    // int32 length
+    // char[length] content if length > -1
+    virtual size_t Append(const char *buffer) = 0;
+
+    std::shared_ptr<arrow::DataType> type() { return InternalBuilder->type(); };
+
+    std::shared_ptr<arrow::Array> Flush()
+    {
+        std::shared_ptr<arrow::Array> array;
+        auto status = InternalBuilder->Finish(&array);
+        return array;
+    };
+};
+
+template <class T> std::shared_ptr<ColumnBuilder> create()
+{
+    return std::make_shared<T>();
+}
+
+extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory;
+
+class ArrayBuilder : public ColumnBuilder
+{
+  private:
+    std::shared_ptr<ColumnBuilder> value_builder_;
+    arrow::ListBuilder *ptr_;
+
+  public:
+    ArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder);
+
+    size_t Append(const char *buf);
+};
+
+class RecordBuilder : public ColumnBuilder
+{
+  private:
+    std::vector<std::shared_ptr<ColumnBuilder>> builders_;
+    arrow::StructBuilder *ptr_;
+    size_t ncolumns_;
+
+  public:
+    RecordBuilder(
+        std::vector<std::pair<std::string, std::shared_ptr<ColumnBuilder>>> fields);
+
+    size_t Append(const char *buf);
+};
+} // namespace pgeon
+
 class FieldReceiver
 {
   public:

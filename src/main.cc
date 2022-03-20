@@ -1,4 +1,4 @@
-#include "decoders.hpp"
+#include "decoders.h"
 #include <iostream>
 
 #include <libpq-fe.h>
@@ -7,14 +7,17 @@ using FieldVector = std::vector<std::pair<std::string, std::shared_ptr<FieldRece
 
 FieldVector GetQuerySchema(PGconn *conn, const char *query);
 
-class Builder
+namespace pgeon {
+std::shared_ptr<ColumnBuilder> MakeBuilder(PGconn *conn, Oid oid);
+}
+class TableBuilder
 {
   private:
     std::vector<FieldReceiver *> fields_;
     std::shared_ptr<arrow::Schema> schema_;
 
   public:
-    Builder(FieldVector &fields)
+    TableBuilder(FieldVector &fields)
     {
         arrow::FieldVector fv;
         for (size_t i = 0; i < fields.size(); i++)
@@ -57,7 +60,7 @@ class Builder
     }
 };
 
-void CopyQuery(PGconn *conn, const char *query, Builder &builder)
+void CopyQuery(PGconn *conn, const char *query, TableBuilder &builder)
 {
     auto copy_query = std::string("COPY (") + query + ") TO STDOUT (FORMAT binary)";
     auto res = PQexec(conn, copy_query.c_str());
@@ -105,10 +108,12 @@ int main(int argc, char const *argv[])
                   << std::endl;
     PQclear(res);
 
+
+    // auto tata = pgeon::MakeBuilder(conn, (Oid)700);
     const char *query = "select * from minute_bars";
     // const char *query = "select sum(volume) from minute_bars;"
     auto h = GetQuerySchema(conn, query);
-    auto builder = Builder(h);
+    auto builder = TableBuilder(h);
 
     CopyQuery(conn, query, builder);
     auto x = builder.Flush();

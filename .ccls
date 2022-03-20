@@ -1,0 +1,2 @@
+%compile_commands.json
+%cpp -std=c++17
