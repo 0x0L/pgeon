@@ -6,6 +6,8 @@
 namespace pgeon
 {
 
+using ColumnVector = std::vector<std::pair<std::string, Oid>>;
+
 ColumnVector ColumnTypesForQuery(PGconn *conn, const char *query)
 {
     // TODO: make descr query work with limit query...
@@ -92,7 +94,8 @@ WHERE
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK)
     {
-        auto ss = PQresultErrorMessage(res);
+        std::cout << "error in copy command: " << PQresultErrorMessage(res)
+                  << std::endl;
     }
 
     std::string typreceive = PQgetvalue(res, 0, 0);
@@ -101,8 +104,8 @@ WHERE
 
     PQclear(res);
 
-    // {"anyarray_recv", "anycompatiblearray_recv", "array_recv"}
-    if (typreceive == "array_recv")
+    if (typreceive == "array_recv" || typreceive == "anyarray_recv" ||
+        typreceive == "anycompatiblearray_recv" || typreceive == "array_recv")
     {
         return createArrayBuilder(MakeColumnBuilder(conn, typelem));
     }

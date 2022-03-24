@@ -1,3 +1,4 @@
+SortIncludes: CaseInsensitive
 AlignAfterOpenBracket: AlwaysBreak
 BreakBeforeBraces: Allman
 ColumnLimit: 88

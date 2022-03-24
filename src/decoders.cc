@@ -194,6 +194,40 @@ class TimestampBuilder : public ColumnBuilder
     }
 };
 
+class IntervalBuilder : public ColumnBuilder
+{
+  private:
+    arrow::DurationBuilder *ptr_;
+
+  public:
+    IntervalBuilder()
+    {
+        Builder = std::make_unique<arrow::DurationBuilder>(
+            arrow::duration(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
+        ptr_ = (arrow::DurationBuilder *)Builder.get();
+    }
+
+    size_t Append(const char *buf)
+    {
+        int32_t len = unpack_int32(buf);
+        buf += 4;
+
+        if (len == -1)
+        {
+            auto status = ptr_->AppendNull();
+            return 4;
+        }
+
+        static const int64_t kMicrosecondsPerDay = 24 * 3600 * 1000000LL;
+        int8_t msecs = unpack_int64(buf);
+        int32_t days = unpack_int32(buf + 8);
+        // int32_t months = unpack_int32(cursor + 12);
+        auto status = ptr_->Append(msecs + days * kMicrosecondsPerDay);
+
+        return 4 + len;
+    }
+};
+
 class BoxBuilder : public ColumnBuilder
 {
   private:
@@ -321,18 +355,6 @@ struct DateRecv
     static inline int32_t recv(const char *x) { return unpack_int32(x) + kEpoch; }
 };
 
-struct IntervalRecv
-{
-    static const int64_t kMicrosecondsPerDay = 24 * 3600 * 1000000LL;
-    static inline int64_t recv(const char *x)
-    {
-        int8_t msecs = unpack_int64(x);
-        int32_t days = unpack_int32(x + 8);
-        // int32_t months = unpack_int32(cursor + 12);
-        return msecs + days * kMicrosecondsPerDay;
-    }
-};
-
 struct BoolRecv
 {
     static inline bool recv(const char *x) { return (*x != 0); }
@@ -445,7 +467,7 @@ std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory = {
     // {"int2vectorrecv", &create<Builder>},
     {"int4recv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
     {"int8recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
-    // {"interval_recv", &create<Builder>},
+    {"interval_recv", &create<IntervalBuilder>},
     {"json_recv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
     // {"jsonb_recv", &create<Builder>},
     // {"jsonpath_recv", &create<Builder>},

@@ -1,3 +1,4 @@
+
 #include "hton.h"
 
 #include <arrow/api.h>
@@ -33,6 +34,7 @@ using FieldVector = std::vector<Field>;
 
 std::shared_ptr<ColumnBuilder>
 createArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder);
+
 std::shared_ptr<ColumnBuilder> createRecordBuilder(FieldVector fields);
 
 extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory;
