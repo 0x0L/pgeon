@@ -117,6 +117,10 @@ WHERE
         }
         return std::make_shared<RecordBuilder>(fields);
     }
+    else if (typreceive == "timestamptz_recv")
+    {
+        return std::make_shared<TimestampBuilder>("utc");
+    }
     return DecoderFactory[typreceive]();
 }
 

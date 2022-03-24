@@ -10,7 +10,7 @@ namespace pgeon
 class ColumnBuilder
 {
   public:
-    std::shared_ptr<arrow::ArrayBuilder> InternalBuilder;
+    std::unique_ptr<arrow::ArrayBuilder> Builder;
     virtual ~ColumnBuilder(){};
 
     // General format of a field is
@@ -18,12 +18,12 @@ class ColumnBuilder
     // char[length] content if length > -1
     virtual size_t Append(const char *buffer) = 0;
 
-    std::shared_ptr<arrow::DataType> type() { return InternalBuilder->type(); };
+    std::shared_ptr<arrow::DataType> type() { return Builder->type(); };
 
     std::shared_ptr<arrow::Array> Flush()
     {
         std::shared_ptr<arrow::Array> array;
-        auto status = InternalBuilder->Finish(&array);
+        auto status = Builder->Finish(&array);
         return array;
     };
 };
@@ -106,6 +106,18 @@ class RecordBuilder : public ColumnBuilder
   public:
     RecordBuilder(
         std::vector<std::pair<std::string, std::shared_ptr<ColumnBuilder>>> fields);
+
+    size_t Append(const char *buf);
+};
+
+class TimestampBuilder : public ColumnBuilder
+{
+  private:
+    arrow::TimestampBuilder *ptr_;
+
+  public:
+    TimestampBuilder();
+    TimestampBuilder(const std::string &timezone);
 
     size_t Append(const char *buf);
 };
