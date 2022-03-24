@@ -136,13 +136,6 @@ class TimeBuilder : public ColumnBuilder
         ptr_ = (arrow::Time64Builder *)Builder.get();
     }
 
-    TimeBuilder(const std::string &timezone)
-    {
-        Builder = std::make_unique<arrow::Time64Builder>(
-            arrow::time64(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
-        ptr_ = (arrow::Time64Builder *)Builder.get();
-    }
-
     size_t Append(const char *buf)
     {
         int32_t len = unpack_int32(buf);
@@ -160,11 +153,6 @@ class TimeBuilder : public ColumnBuilder
         return 4 + len;
     }
 };
-
-std::shared_ptr<ColumnBuilder> createTimeBuilder(const std::string &timezone)
-{
-    return std::make_shared<TimeBuilder>(timezone);
-}
 
 class TimestampBuilder : public ColumnBuilder
 {
@@ -205,11 +193,6 @@ class TimestampBuilder : public ColumnBuilder
         return 4 + len;
     }
 };
-
-std::shared_ptr<ColumnBuilder> createTimestampBuilder(const std::string &timezone)
-{
-    return std::make_shared<TimestampBuilder>(timezone);
-}
 
 class BoxBuilder : public ColumnBuilder
 {
@@ -498,7 +481,7 @@ std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory = {
     {"textrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
     // {"tidrecv", &create<Builder>},
     {"time_recv", &create<TimeBuilder>},
-    // {"timetz_recv", &create<Builder>},  // TODO: in sql.cc
+    // {"timetz_recv", &createUTC<TimeBuilder>},  // nope
     {"timestamp_recv", &create<TimestampBuilder>},
     {"timestamptz_recv", &createUTC<TimestampBuilder>},
     // {"tsqueryrecv", &create<Builder>},

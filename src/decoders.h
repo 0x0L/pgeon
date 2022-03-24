@@ -34,8 +34,6 @@ using FieldVector = std::vector<Field>;
 std::shared_ptr<ColumnBuilder>
 createArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder);
 std::shared_ptr<ColumnBuilder> createRecordBuilder(FieldVector fields);
-std::shared_ptr<ColumnBuilder> createTimeBuilder(const std::string &timezone);
-std::shared_ptr<ColumnBuilder> createTimestampBuilder(const std::string &timezone);
 
 extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory;
 
