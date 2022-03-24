@@ -3,132 +3,212 @@
 namespace pgeon
 {
 
-ArrayBuilder::ArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder)
-    : value_builder_(value_builder)
+class ArrayBuilder : public ColumnBuilder
 {
-    Builder = std::make_unique<arrow::ListBuilder>(
-        arrow::default_memory_pool(), std::move(value_builder->Builder));
-    ptr_ = (arrow::ListBuilder *)Builder.get();
-}
+  private:
+    std::shared_ptr<ColumnBuilder> value_builder_;
+    arrow::ListBuilder *ptr_;
 
-size_t ArrayBuilder::Append(const char *buf)
-{
-    int32_t len = unpack_int32(buf);
-    buf += 4;
-
-    if (len == -1)
+  public:
+    ArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder)
+        : value_builder_(value_builder)
     {
-        auto status = ptr_->AppendNull();
-        return 4;
+        Builder = std::make_unique<arrow::ListBuilder>(
+            arrow::default_memory_pool(), std::move(value_builder->Builder));
+        ptr_ = (arrow::ListBuilder *)Builder.get();
     }
 
-    int32_t ndim = unpack_int32(buf);
-    buf += 4;
-    // int32_t hasnull = unpack_int32(buf);
-    buf += 4;
-    // int32_t element_type = unpack_int32(buf);
-    buf += 4;
-
-    // Element will be flattened
-    int32_t nitems = 1;
-    for (size_t i = 0; i < ndim; i++)
+    size_t Append(const char *buf)
     {
-        int32_t dim = unpack_int32(buf);
-        buf += 4;
-        // int32_t lb = unpack_int32(buf);
-        buf += 4;
-        nitems *= dim;
-    }
-
-    auto status = ptr_->Append();
-    for (size_t i = 0; i < nitems; i++)
-    {
-        buf += value_builder_->Append(buf);
-    }
-
-    return 4 + len;
-}
-
-RecordBuilder::RecordBuilder(
-    std::vector<std::pair<std::string, std::shared_ptr<ColumnBuilder>>> fields)
-    : ncolumns_(fields.size())
-{
-    std::vector<std::shared_ptr<arrow::ArrayBuilder>> builders(ncolumns_);
-    arrow::FieldVector fv(ncolumns_);
-    for (size_t i = 0; i < ncolumns_; i++)
-    {
-        builders_.push_back(fields[i].second);
-        builders[i] = std::move(fields[i].second->Builder);
-        fv[i] = arrow::field(fields[i].first, builders[i]->type());
-    }
-
-    Builder = std::make_unique<arrow::StructBuilder>(
-        arrow::struct_(fv), arrow::default_memory_pool(), builders);
-
-    ptr_ = (arrow::StructBuilder *)Builder.get();
-}
-
-size_t RecordBuilder::Append(const char *buf)
-{
-    int32_t len = unpack_int32(buf);
-    buf += 4;
-
-    if (len == -1)
-    {
-        auto status = ptr_->AppendNull();
-        return 4;
-    }
-
-    auto status = ptr_->Append();
-
-    int32_t validcols = unpack_int32(buf);
-    buf += 4;
-
-    assert(validcols == ncolumns_);
-
-    for (size_t i = 0; i < ncolumns_; i++)
-    {
-        // int32_t column_type = unpack_int32(buf);
+        int32_t len = unpack_int32(buf);
         buf += 4;
 
-        buf += builders_[i]->Append(buf);
+        if (len == -1)
+        {
+            auto status = ptr_->AppendNull();
+            return 4;
+        }
+
+        int32_t ndim = unpack_int32(buf);
+        buf += 4;
+        // int32_t hasnull = unpack_int32(buf);
+        buf += 4;
+        // int32_t element_type = unpack_int32(buf);
+        buf += 4;
+
+        // Element will be flattened
+        int32_t nitems = 1;
+        for (size_t i = 0; i < ndim; i++)
+        {
+            int32_t dim = unpack_int32(buf);
+            buf += 4;
+            // int32_t lb = unpack_int32(buf);
+            buf += 4;
+            nitems *= dim;
+        }
+
+        auto status = ptr_->Append();
+        for (size_t i = 0; i < nitems; i++)
+        {
+            buf += value_builder_->Append(buf);
+        }
+
+        return 4 + len;
     }
+};
 
-    return 4 + len;
+std::shared_ptr<ColumnBuilder>
+createArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder)
+{
+    return std::make_shared<ArrayBuilder>(value_builder);
 }
 
-
-TimestampBuilder::TimestampBuilder()
+class RecordBuilder : public ColumnBuilder
 {
-    Builder = std::make_unique<arrow::TimestampBuilder>(
-        arrow::timestamp(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
-    ptr_ = (arrow::TimestampBuilder *)Builder.get();
-}
+  private:
+    std::vector<std::shared_ptr<ColumnBuilder>> builders_;
+    arrow::StructBuilder *ptr_;
+    size_t ncolumns_;
 
-TimestampBuilder::TimestampBuilder(const std::string &timezone)
-{
-    Builder = std::make_unique<arrow::TimestampBuilder>(
-        arrow::timestamp(arrow::TimeUnit::MICRO, timezone),
-        arrow::default_memory_pool());
-    ptr_ = (arrow::TimestampBuilder *)Builder.get();
-}
-
-size_t TimestampBuilder::Append(const char *buf)
-{
-    int32_t len = unpack_int32(buf);
-    buf += 4;
-
-    if (len == -1)
+  public:
+    RecordBuilder(FieldVector fields) : ncolumns_(fields.size())
     {
-        auto status = ptr_->AppendNull();
-        return 4;
+        std::vector<std::shared_ptr<arrow::ArrayBuilder>> builders(ncolumns_);
+        arrow::FieldVector fv(ncolumns_);
+        for (size_t i = 0; i < ncolumns_; i++)
+        {
+            builders_.push_back(fields[i].second);
+            builders[i] = std::move(fields[i].second->Builder);
+            fv[i] = arrow::field(fields[i].first, builders[i]->type());
+        }
+
+        Builder = std::make_unique<arrow::StructBuilder>(
+            arrow::struct_(fv), arrow::default_memory_pool(), builders);
+
+        ptr_ = (arrow::StructBuilder *)Builder.get();
     }
 
-    static const int64_t kEpoch = 946684800000000; // 2000-01-01 - 1970-01-01 (us)
-    auto value = unpack_int64(buf) + kEpoch;
-    auto status = ptr_->Append(value);
+    size_t Append(const char *buf)
+    {
+        int32_t len = unpack_int32(buf);
+        buf += 4;
 
-    return 4 + len;
+        if (len == -1)
+        {
+            auto status = ptr_->AppendNull();
+            return 4;
+        }
+
+        auto status = ptr_->Append();
+
+        int32_t validcols = unpack_int32(buf);
+        buf += 4;
+
+        assert(validcols == ncolumns_);
+
+        for (size_t i = 0; i < ncolumns_; i++)
+        {
+            // int32_t column_type = unpack_int32(buf);
+            buf += 4;
+
+            buf += builders_[i]->Append(buf);
+        }
+
+        return 4 + len;
+    }
+};
+
+std::shared_ptr<ColumnBuilder> createRecordBuilder(FieldVector fields)
+{
+    return std::make_shared<RecordBuilder>(fields);
+}
+
+class TimeBuilder : public ColumnBuilder
+{
+  private:
+    arrow::Time64Builder *ptr_;
+
+  public:
+    TimeBuilder()
+    {
+        Builder = std::make_unique<arrow::Time64Builder>(
+            arrow::time64(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
+        ptr_ = (arrow::Time64Builder *)Builder.get();
+    }
+
+    TimeBuilder(const std::string &timezone)
+    {
+        Builder = std::make_unique<arrow::Time64Builder>(
+            arrow::time64(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
+        ptr_ = (arrow::Time64Builder *)Builder.get();
+    }
+
+    size_t Append(const char *buf)
+    {
+        int32_t len = unpack_int32(buf);
+        buf += 4;
+
+        if (len == -1)
+        {
+            auto status = ptr_->AppendNull();
+            return 4;
+        }
+
+        auto value = unpack_int64(buf);
+        auto status = ptr_->Append(value);
+
+        return 4 + len;
+    }
+};
+
+std::shared_ptr<ColumnBuilder> createTimeBuilder(const std::string &timezone)
+{
+    return std::make_shared<TimeBuilder>(timezone);
+}
+
+class TimestampBuilder : public ColumnBuilder
+{
+  private:
+    arrow::TimestampBuilder *ptr_;
+
+  public:
+    TimestampBuilder()
+    {
+        Builder = std::make_unique<arrow::TimestampBuilder>(
+            arrow::timestamp(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
+        ptr_ = (arrow::TimestampBuilder *)Builder.get();
+    }
+
+    TimestampBuilder(const std::string &timezone)
+    {
+        Builder = std::make_unique<arrow::TimestampBuilder>(
+            arrow::timestamp(arrow::TimeUnit::MICRO, timezone),
+            arrow::default_memory_pool());
+        ptr_ = (arrow::TimestampBuilder *)Builder.get();
+    }
+
+    size_t Append(const char *buf)
+    {
+        int32_t len = unpack_int32(buf);
+        buf += 4;
+
+        if (len == -1)
+        {
+            auto status = ptr_->AppendNull();
+            return 4;
+        }
+
+        static const int64_t kEpoch = 946684800000000; // 2000-01-01 - 1970-01-01 (us)
+        auto value = unpack_int64(buf) + kEpoch;
+        auto status = ptr_->Append(value);
+
+        return 4 + len;
+    }
+};
+
+std::shared_ptr<ColumnBuilder> createTimestampBuilder(const std::string &timezone)
+{
+    return std::make_shared<TimestampBuilder>(timezone);
 }
 
 class BoxBuilder : public ColumnBuilder
@@ -344,7 +424,6 @@ template <class BuilderT, typename RecvT> class GenericBuilder : public ColumnBu
 
         return 4 + len;
     }
-
 };
 
 template <class T> std::shared_ptr<ColumnBuilder> create()
@@ -352,7 +431,10 @@ template <class T> std::shared_ptr<ColumnBuilder> create()
     return std::make_shared<T>();
 }
 
-// {"anyarray_recv", "anycompatiblearray_recv", "array_recv"}
+template <class T> std::shared_ptr<ColumnBuilder> createUTC()
+{
+    return std::make_shared<T>("utc");
+}
 
 std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory = {
     {"bit_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
@@ -415,10 +497,10 @@ std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory = {
     {"regtyperecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
     {"textrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
     // {"tidrecv", &create<Builder>},
-    // {"time_recv", &create<Builder>},
+    {"time_recv", &create<TimeBuilder>},
+    // {"timetz_recv", &create<Builder>},  // TODO: in sql.cc
     {"timestamp_recv", &create<TimestampBuilder>},
-    {"timestamptz_recv", &create<TimestampBuilder>}, // TODO use arrow::timestamp("utc")
-    // {"timetz_recv", &create<Builder>},
+    {"timestamptz_recv", &createUTC<TimestampBuilder>},
     // {"tsqueryrecv", &create<Builder>},
     // {"tsvectorrecv", &create<Builder>},
     {"unknownrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},

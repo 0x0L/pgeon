@@ -101,10 +101,10 @@ WHERE
 
     PQclear(res);
 
+    // {"anyarray_recv", "anycompatiblearray_recv", "array_recv"}
     if (typreceive == "array_recv")
     {
-        auto value_receiver = MakeColumnBuilder(conn, typelem);
-        return std::make_shared<ArrayBuilder>(value_receiver);
+        return createArrayBuilder(MakeColumnBuilder(conn, typelem));
     }
     else if (typreceive == "record_recv")
     {
@@ -112,14 +112,10 @@ WHERE
         FieldVector fields;
         for (size_t i = 0; i < fields_info.size(); i++)
         {
-            auto [field_name, field_oid] = fields_info[i];
-            fields.push_back({field_name, MakeColumnBuilder(conn, field_oid)});
+            auto [name, oid] = fields_info[i];
+            fields.push_back({name, MakeColumnBuilder(conn, oid)});
         }
-        return std::make_shared<RecordBuilder>(fields);
-    }
-    else if (typreceive == "timestamptz_recv")
-    {
-        return std::make_shared<TimestampBuilder>("utc");
+        return createRecordBuilder(fields);
     }
     return DecoderFactory[typreceive]();
 }

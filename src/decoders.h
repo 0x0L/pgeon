@@ -28,10 +28,16 @@ class ColumnBuilder
     };
 };
 
-extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory;
-
 using Field = std::pair<std::string, std::shared_ptr<ColumnBuilder>>;
 using FieldVector = std::vector<Field>;
+
+std::shared_ptr<ColumnBuilder>
+createArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder);
+std::shared_ptr<ColumnBuilder> createRecordBuilder(FieldVector fields);
+std::shared_ptr<ColumnBuilder> createTimeBuilder(const std::string &timezone);
+std::shared_ptr<ColumnBuilder> createTimestampBuilder(const std::string &timezone);
+
+extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory;
 
 class TableBuilder
 {
@@ -82,44 +88,6 @@ class TableBuilder
     }
 
     // TODO: Flush to batch
-};
-
-class ArrayBuilder : public ColumnBuilder
-{
-  private:
-    std::shared_ptr<ColumnBuilder> value_builder_;
-    arrow::ListBuilder *ptr_;
-
-  public:
-    ArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder);
-
-    size_t Append(const char *buf);
-};
-
-class RecordBuilder : public ColumnBuilder
-{
-  private:
-    std::vector<std::shared_ptr<ColumnBuilder>> builders_;
-    arrow::StructBuilder *ptr_;
-    size_t ncolumns_;
-
-  public:
-    RecordBuilder(
-        std::vector<std::pair<std::string, std::shared_ptr<ColumnBuilder>>> fields);
-
-    size_t Append(const char *buf);
-};
-
-class TimestampBuilder : public ColumnBuilder
-{
-  private:
-    arrow::TimestampBuilder *ptr_;
-
-  public:
-    TimestampBuilder();
-    TimestampBuilder(const std::string &timezone);
-
-    size_t Append(const char *buf);
 };
 
 } // namespace pgeon
