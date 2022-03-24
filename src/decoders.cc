@@ -319,6 +319,42 @@ struct Float8Recv
     static inline double recv(const char *x) { return unpack_double(x); }
 };
 
+template <class T> std::shared_ptr<ColumnBuilder> create()
+{
+    return std::make_shared<T>();
+}
+
+class TimestampBuilder : public ColumnBuilder
+{
+  private:
+    arrow::TimestampBuilder *ptr_;
+
+  public:
+    TimestampBuilder()
+    {
+        InternalBuilder = std::make_shared<arrow::TimestampBuilder>(
+            arrow::timestamp(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
+        ptr_ = (arrow::TimestampBuilder *)InternalBuilder.get();
+    }
+
+    size_t Append(const char *buf)
+    {
+        int32_t len = unpack_int32(buf);
+        buf += 4;
+
+        if (len == -1)
+        {
+            auto status = ptr_->AppendNull();
+            return 4;
+        }
+
+        auto value = TimestampRecv::recv(buf);
+        auto status = ptr_->Append(value);
+
+        return 4 + len;
+    }
+};
+
 // {"anyarray_recv", "anycompatiblearray_recv", "array_recv"}
 
 std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory = {
@@ -383,8 +419,8 @@ std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory = {
     {"textrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
     // {"tidrecv", &create<Builder>},
     // {"time_recv", &create<Builder>},
-    // {"timestamp_recv", &create<Builder>},
-    // {"timestamptz_recv", &create<Builder>},
+    {"timestamp_recv", &create<TimestampBuilder>},
+    {"timestamptz_recv", &create<TimestampBuilder>},
     // {"timetz_recv", &create<Builder>},
     // {"tsqueryrecv", &create<Builder>},
     // {"tsvectorrecv", &create<Builder>},

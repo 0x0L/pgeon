@@ -1,30 +1,12 @@
-#include "decoders.h"
-#include <libpq-fe.h>
+#include "sql.h"
 
+#include <iostream>
 #include <stdio.h>
 
 namespace pgeon
 {
-template <typename... Args>
-std::string string_format(const std::string &format, Args... args)
-{
-    // Extra space for '\0'
-    int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) + 1;
-    if (size_s <= 0)
-    {
-        throw std::runtime_error("Error during formatting.");
-    }
-    auto size = static_cast<size_t>(size_s);
-    auto buf = std::make_unique<char[]>(size);
-    std::snprintf(buf.get(), size, format.c_str(), args...);
 
-    // We don't want the '\0' inside
-    return std::string(buf.get(), buf.get() + size - 1);
-}
-
-using ColumnVector = std::vector<std::pair<std::string, Oid>>;
-
-ColumnVector ColumnsForQuery(PGconn *conn, const char *query)
+ColumnVector ColumnTypesForQuery(PGconn *conn, const char *query)
 {
     // TODO: make descr query work with limit query...
     const auto descr_query = std::string(query) + " limit 0";
@@ -32,7 +14,7 @@ ColumnVector ColumnsForQuery(PGconn *conn, const char *query)
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK)
     {
-        // std::cout << PQresultErrorMessage(res) << std::endl;
+        std::cout << PQresultErrorMessage(res) << std::endl;
     }
 
     int n = PQnfields(res);
@@ -49,7 +31,7 @@ ColumnVector ColumnsForQuery(PGconn *conn, const char *query)
     return fields;
 }
 
-ColumnVector RecordInfo(PGconn *conn, Oid oid)
+ColumnVector RecordTypeInfo(PGconn *conn, Oid oid)
 {
     char query[4096];
     snprintf(
@@ -67,25 +49,11 @@ WHERE
 ;)",
         oid);
 
-    //     const char *QUERY = R"(
-    // SELECT
-    //     attnum, attname, atttypid
-    // FROM
-    //     pg_catalog.pg_attribute a,
-    //     pg_catalog.pg_type t,
-    //     pg_catalog.pg_namespace n
-    // WHERE
-    //     t.typnamespace = n.oid
-    //     AND a.atttypid = t.oid
-    //     AND a.attrelid = {}
-    // ;)";
-
-    //     const auto query = string_format(QUERY, oid);
     auto res = PQexec(conn, query);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK)
     {
-        // std::cout << PQresultErrorMessage(res) << std::endl;
+        std::cout << PQresultErrorMessage(res) << std::endl;
     }
 
     int nfields = PQntuples(res);
@@ -104,11 +72,9 @@ WHERE
     return fields;
 }
 
-using FieldVector = std::vector<std::pair<std::string, std::shared_ptr<ColumnBuilder>>>;
-
-std::shared_ptr<ColumnBuilder> MakeBuilder(PGconn *conn, Oid oid)
+std::shared_ptr<ColumnBuilder> MakeColumnBuilder(PGconn *conn, Oid oid)
 {
-        char query[4096];
+    char query[4096];
     snprintf(
         query, sizeof(query), R"(
 SELECT
@@ -122,18 +88,6 @@ WHERE
 ;)",
         oid);
 
-//     const char *_TYPE_INFO = R"(
-// SELECT
-//     typreceive, typelem, typrelid
-// FROM
-//     pg_catalog.pg_type t,
-//     pg_catalog.pg_namespace n
-// WHERE
-//     t.typnamespace = n.oid
-//     AND t.oid = {}
-// ;)";
-
-//     const auto query = string_format(_TYPE_INFO, oid);
     auto res = PQexec(conn, query);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -149,25 +103,69 @@ WHERE
 
     if (typreceive == "array_recv")
     {
-        auto value_receiver = MakeBuilder(conn, typelem);
+        auto value_receiver = MakeColumnBuilder(conn, typelem);
         return std::make_shared<ArrayBuilder>(value_receiver);
     }
     else if (typreceive == "record_recv")
     {
-        auto fields_info = RecordInfo(conn, typrelid);
+        auto fields_info = RecordTypeInfo(conn, typrelid);
         FieldVector fields;
         for (size_t i = 0; i < fields_info.size(); i++)
         {
             auto [field_name, field_oid] = fields_info[i];
-            fields.push_back({field_name, MakeBuilder(conn, field_oid)});
+            fields.push_back({field_name, MakeColumnBuilder(conn, field_oid)});
         }
         return std::make_shared<RecordBuilder>(fields);
     }
-    // else if (typreceive == "timestamp_recv")
-    // {
-    //     return std::make_shared<TimestampReceiver>();
-    // }
-
     return DecoderFactory[typreceive]();
 }
+
+std::shared_ptr<TableBuilder> MakeQueryBuilder(PGconn *conn, const char *query)
+{
+    auto columns = ColumnTypesForQuery(conn, query);
+    FieldVector fields;
+    for (auto &[name, oid] : columns)
+    {
+        auto builder = MakeColumnBuilder(conn, oid);
+        fields.push_back(std::make_pair(name, builder));
+    }
+    return std::make_shared<TableBuilder>(fields);
+}
+
+void CopyQuery(PGconn *conn, const char *query, std::shared_ptr<TableBuilder> builder)
+{
+    auto copy_query = std::string("COPY (") + query + ") TO STDOUT (FORMAT binary)";
+    auto res = PQexec(conn, copy_query.c_str());
+    if (PQresultStatus(res) != PGRES_COPY_OUT)
+        std::cout << "error in copy command: " << PQresultErrorMessage(res)
+                  << std::endl;
+    PQclear(res);
+
+    TableBuilder *builder_ = builder.get();
+    char *tuple;
+
+    auto status = PQgetCopyData(conn, &tuple, 0);
+    if (status > 0)
+    {
+        const int kBinaryHeaderSize = 19;
+        builder_->Append(tuple + kBinaryHeaderSize);
+        PQfreemem(tuple);
+    }
+
+    while (true)
+    {
+        status = PQgetCopyData(conn, &tuple, 0);
+        if (status < 0)
+            break;
+
+        builder_->Append(tuple);
+        PQfreemem(tuple);
+    }
+
+    res = PQgetResult(conn);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+        std::cout << "copy command failed: " << PQresultErrorMessage(res) << std::endl;
+    PQclear(res);
+}
+
 } // namespace pgeon

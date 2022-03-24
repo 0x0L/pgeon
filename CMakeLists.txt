@@ -13,5 +13,5 @@ find_package(Arrow REQUIRED)
 message(STATUS "Using Arrow ${ARROW_VERSION}")
 
 add_executable(pgeon)
-target_sources(pgeon PRIVATE src/new.cc src/main.cc src/schema.cc src/sql.cc src/decoders.cc)
+target_sources(pgeon PRIVATE src/main.cc src/sql.cc src/decoders.cc)
 target_link_libraries(pgeon PUBLIC arrow_shared PostgreSQL::PostgreSQL)
