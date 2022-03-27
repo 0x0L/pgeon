@@ -10,8 +10,8 @@ using ColumnVector = std::vector<std::pair<std::string, Oid>>;
 
 ColumnVector ColumnTypesForQuery(PGconn *conn, const char *query)
 {
-    // TODO: make descr query work with limit query...
-    const auto descr_query = std::string(query) + " limit 0";
+    const auto descr_query =
+        "SELECT * FROM (" + std::string(query) + ") AS FOO LIMIT 0;";
     PGresult *res = PQexec(conn, descr_query.c_str());
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -120,7 +120,12 @@ WHERE
         }
         return createRecordBuilder(fields);
     }
-    return DecoderFactory[typreceive]();
+    else if (typreceive == "numeric_recv")
+    {
+        return createNumericBuilder(22, 9); // TODO
+    }
+    return gDecoderFactory[typreceive](); // TODO: should pass some struct as type info
+                                          // (tz, numeric, etc...)
 }
 
 std::shared_ptr<TableBuilder> MakeQueryBuilder(PGconn *conn, const char *query)
@@ -145,6 +150,7 @@ void CopyQuery(PGconn *conn, const char *query, std::shared_ptr<TableBuilder> bu
     PQclear(res);
 
     TableBuilder *builder_ = builder.get();
+
     char *tuple;
 
     auto status = PQgetCopyData(conn, &tuple, 0);
@@ -152,6 +158,7 @@ void CopyQuery(PGconn *conn, const char *query, std::shared_ptr<TableBuilder> bu
     {
         const int kBinaryHeaderSize = 19;
         builder_->Append(tuple + kBinaryHeaderSize);
+
         PQfreemem(tuple);
     }
 

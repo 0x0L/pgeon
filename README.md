@@ -7,3 +7,13 @@ Fast data retrieval from a PostgreSQL database into Apache Arrow format.
 * Tests
 
 * Benchmarks
+
+* Pass arguments to factory
+
+    - control which strings (/ columns ?) should be dict encoded
+
+    - make numeric work properly
+
+* Global refactor / cleanup / style
+
+* Batchbuilder with callback every N tuples

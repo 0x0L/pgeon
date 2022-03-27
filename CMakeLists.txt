@@ -12,6 +12,10 @@ message(STATUS "Using PostgreSQL ${PostgreSQL_VERSION_STRING}")
 find_package(Arrow REQUIRED)
 message(STATUS "Using Arrow ${ARROW_VERSION}")
 
+# find_package(OpenMP REQUIRED)
+# message(STATUS "Using OpenMP ${OpenMP_CXX_VERSION}")
+
 add_executable(pgeon)
 target_sources(pgeon PRIVATE src/main.cc src/sql.cc src/decoders.cc)
 target_link_libraries(pgeon PUBLIC arrow_shared PostgreSQL::PostgreSQL)
+# target_link_libraries(pgeon PUBLIC OpenMP::OpenMP_CXX)

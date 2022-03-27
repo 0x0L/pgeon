@@ -9,6 +9,7 @@ using namespace pgeon;
 int main(int argc, char const *argv[])
 {
     const char *conninfo = "postgresql://localhost/mytests";
+
     auto conn = PQconnectdb(conninfo);
     if (PQstatus(conn) != CONNECTION_OK)
         std::cout << "failed on PostgreSQL connection: " << PQerrorMessage(conn)
@@ -21,11 +22,14 @@ int main(int argc, char const *argv[])
     PQclear(res);
 
     const char *query = "select * from minute_bars";
-    // const char *query = "select sum(volume) from minute_bars;"
+    // query = "select sum(volume) as my_sum from minute_bars";
+    // query = "select * from numerical";
 
     auto builder = MakeQueryBuilder(conn, query);
     CopyQuery(conn, query, builder);
     auto table = builder->Flush();
+
+    // std::cout << table->ToString() << std::endl;
     std::cout << table->num_rows() << " rows fetched" << std::endl;
 
     res = PQexec(conn, "END");

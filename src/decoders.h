@@ -37,7 +37,9 @@ createArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder);
 
 std::shared_ptr<ColumnBuilder> createRecordBuilder(FieldVector fields);
 
-extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> DecoderFactory;
+std::shared_ptr<ColumnBuilder> createNumericBuilder(int precision, int scale);
+
+extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> gDecoderFactory;
 
 class TableBuilder
 {
@@ -45,6 +47,7 @@ class TableBuilder
     FieldVector fields_;
     std::vector<ColumnBuilder *> builders_;
     std::shared_ptr<arrow::Schema> schema_;
+    // std::vector<int32_t> fields_offsets_;
 
   public:
     TableBuilder(FieldVector &fields) : fields_(fields)
@@ -57,6 +60,7 @@ class TableBuilder
             schema.push_back(arrow::field(name, builder->type()));
         }
         schema_ = arrow::schema(schema);
+        // fields_offsets_ = std::vector<int32_t>(fields.size(), 0);
     }
 
     int32_t Append(const char *cursor)
@@ -68,9 +72,18 @@ class TableBuilder
         if (nfields == -1)
             return 2;
 
+        // const char* cur2 = cur;
+        // for (size_t i = 1; i < nfields; i++)
+        // {
+        //     cur2 += unpack_int32(cur2) + 4;
+        //     fields_offsets_[i] = cur2 - cur;
+        // }
+
+        // #pragma omp parallel for
         for (size_t i = 0; i < nfields; i++)
         {
             cur += builders_[i]->Append(cur);
+            // builders_[i]->Append(cur + fields_offsets_[i]);
         }
         return cur - cursor;
     }
