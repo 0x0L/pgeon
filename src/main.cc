@@ -23,14 +23,14 @@ int main(int argc, char const *argv[])
 
     const char *query = "select * from minute_bars";
     // query = "select sum(volume) as my_sum from minute_bars";
-    // query = "select * from numerical";
+    query = "select * from numeric";
 
     auto builder = MakeQueryBuilder(conn, query);
     CopyQuery(conn, query, builder);
     auto table = builder->Flush();
 
-    // std::cout << table->ToString() << std::endl;
-    std::cout << table->num_rows() << " rows fetched" << std::endl;
+    std::cout << table->ToString() << std::endl;
+    // std::cout << table->num_rows() << " rows fetched" << std::endl;
 
     res = PQexec(conn, "END");
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
