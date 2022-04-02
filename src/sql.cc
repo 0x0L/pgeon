@@ -6,7 +6,7 @@
 namespace pgeon
 {
 
-using ColumnVector = std::vector<std::pair<std::string, Oid>>;
+using ColumnVector = std::vector<std::tuple<std::string, Oid, int>>;
 
 ColumnVector ColumnTypesForQuery(PGconn *conn, const char *query)
 {
@@ -26,7 +26,8 @@ ColumnVector ColumnTypesForQuery(PGconn *conn, const char *query)
     {
         const char *name = PQfname(res, i);
         Oid oid = PQftype(res, i);
-        fields[i] = {name, oid};
+        int mod = PQfmod(res, i);
+        fields[i] = {name, oid, mod};
     }
 
     PQclear(res);
@@ -39,7 +40,7 @@ ColumnVector RecordTypeInfo(PGconn *conn, Oid oid)
     snprintf(
         query, sizeof(query), R"(
 SELECT
-    attnum, attname, atttypid
+    attnum, attname, atttypid, atttypmod, atttyplen
 FROM
     pg_catalog.pg_attribute a,
     pg_catalog.pg_type t,
@@ -59,23 +60,30 @@ WHERE
     }
 
     int nfields = PQntuples(res);
-    std::vector<std::pair<std::string, Oid>> fields(nfields);
+    std::vector<std::tuple<std::string, Oid, int>> fields(nfields);
 
     for (size_t i = 0; i < nfields; i++)
     {
         int attnum = atoi(PQgetvalue(res, i, 0));
         const char *attname = PQgetvalue(res, i, 1);
         Oid atttypid = atooid(PQgetvalue(res, i, 2));
+        int atttypmod = atoi(PQgetvalue(res, i, 3));
 
-        fields[attnum - 1] = {attname, atttypid};
+        fields[attnum - 1] = {attname, atttypid, atttypmod};
     }
 
     PQclear(res);
     return fields;
 }
 
-std::shared_ptr<ColumnBuilder> MakeColumnBuilder(PGconn *conn, Oid oid)
+// attname, attnum, atttypid, atttypmod, attlen,
+// attbyval, attalign, typtype, typrelid, typelem,
+// nspname, typname
+
+std::shared_ptr<ColumnBuilder> MakeColumnBuilder(PGconn *conn, Oid oid, int mod)
 {
+    const UserOptions &options = UserOptions::Defaults();
+
     char query[4096];
     snprintf(
         query, sizeof(query), R"(
@@ -102,12 +110,15 @@ WHERE
     Oid typelem = atooid(PQgetvalue(res, 0, 1));
     Oid typrelid = atooid(PQgetvalue(res, 0, 2));
 
+    SqlTypeInfo sql_info = {.typmod = mod};
+
     PQclear(res);
 
-    if (typreceive == "array_recv" || typreceive == "anyarray_recv" ||
-        typreceive == "anycompatiblearray_recv" || typreceive == "array_recv")
+    if (typreceive == "anyarray_recv" || typreceive == "anycompatiblearray_recv" ||
+        typreceive == "array_recv")
     {
-        return createArrayBuilder(MakeColumnBuilder(conn, typelem));
+        sql_info.value_builder = MakeColumnBuilder(conn, typelem, mod);
+        // return createArrayBuilder(MakeColumnBuilder(conn, typelem));
     }
     else if (typreceive == "record_recv")
     {
@@ -115,27 +126,23 @@ WHERE
         FieldVector fields;
         for (size_t i = 0; i < fields_info.size(); i++)
         {
-            auto [name, oid] = fields_info[i];
-            fields.push_back({name, MakeColumnBuilder(conn, oid)});
+            auto [name, oid, mod] = fields_info[i];
+            fields.push_back({name, MakeColumnBuilder(conn, oid, mod)});
         }
-        return createRecordBuilder(fields);
+        sql_info.field_builders = fields;
+        // return createRecordBuilder(fields);
     }
-    else if (typreceive == "numeric_recv")
-    {
-        return createNumericBuilder(22, 9); // TODO
-    }
-    return gDecoderFactory[typreceive](); // TODO: should pass some struct as type info
-                                          // (tz, numeric, etc...)
+    return gDecoderFactory[typreceive](sql_info, options);
 }
 
 std::shared_ptr<TableBuilder> MakeQueryBuilder(PGconn *conn, const char *query)
 {
     auto columns = ColumnTypesForQuery(conn, query);
     FieldVector fields;
-    for (auto &[name, oid] : columns)
+    for (auto &[name, oid, mod] : columns)
     {
-        auto builder = MakeColumnBuilder(conn, oid);
-        fields.push_back(std::make_pair(name, builder));
+        auto builder = MakeColumnBuilder(conn, oid, mod);
+        fields.push_back({name, builder});
     }
     return std::make_shared<TableBuilder>(fields);
 }

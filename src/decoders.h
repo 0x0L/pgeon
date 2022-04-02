@@ -8,6 +8,33 @@
 namespace pgeon
 {
 
+class ColumnBuilder;
+
+using Field = std::pair<std::string, std::shared_ptr<ColumnBuilder>>;
+using FieldVector = std::vector<Field>;
+
+struct SqlTypeInfo
+{
+    // attname, attnum, atttypid, atttypmod, attlen,"
+    // 		 "       attbyval, attalign, typtype, typrelid, typelem,"
+    // 		 "       nspname, typname"
+
+    int typmod;
+
+    // ListBuilder
+    std::shared_ptr<ColumnBuilder> value_builder;
+
+    // StructBuilder
+    std::vector<std::pair<std::string, std::shared_ptr<ColumnBuilder>>> field_builders;
+};
+
+struct UserOptions
+{
+    bool string_as_dictionaries = false;
+
+    struct UserOptions static Defaults() { return UserOptions(); }
+};
+
 class ColumnBuilder
 {
   public:
@@ -29,17 +56,17 @@ class ColumnBuilder
     };
 };
 
-using Field = std::pair<std::string, std::shared_ptr<ColumnBuilder>>;
-using FieldVector = std::vector<Field>;
+// std::shared_ptr<ColumnBuilder>
+// createArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder);
 
-std::shared_ptr<ColumnBuilder>
-createArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder);
+// std::shared_ptr<ColumnBuilder> createRecordBuilder(FieldVector fields);
 
-std::shared_ptr<ColumnBuilder> createRecordBuilder(FieldVector fields);
+// std::shared_ptr<ColumnBuilder> createNumericBuilder(int precision, int scale);
 
-std::shared_ptr<ColumnBuilder> createNumericBuilder(int precision, int scale);
-
-extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> gDecoderFactory;
+extern std::map<
+    std::string,
+    std::shared_ptr<ColumnBuilder> (*)(const SqlTypeInfo &, const UserOptions &)>
+    gDecoderFactory;
 
 class TableBuilder
 {

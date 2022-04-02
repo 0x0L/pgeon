@@ -10,11 +10,11 @@ class ArrayBuilder : public ColumnBuilder
     arrow::ListBuilder *ptr_;
 
   public:
-    ArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder)
-        : value_builder_(value_builder)
+    ArrayBuilder(const SqlTypeInfo &info, const UserOptions &)
+        : value_builder_(info.value_builder)
     {
         Builder = std::make_unique<arrow::ListBuilder>(
-            arrow::default_memory_pool(), std::move(value_builder->Builder));
+            arrow::default_memory_pool(), std::move(value_builder_->Builder));
         ptr_ = (arrow::ListBuilder *)Builder.get();
     }
 
@@ -57,12 +57,6 @@ class ArrayBuilder : public ColumnBuilder
     }
 };
 
-std::shared_ptr<ColumnBuilder>
-createArrayBuilder(std::shared_ptr<ColumnBuilder> value_builder)
-{
-    return std::make_shared<ArrayBuilder>(value_builder);
-}
-
 class RecordBuilder : public ColumnBuilder
 {
   private:
@@ -71,8 +65,11 @@ class RecordBuilder : public ColumnBuilder
     size_t ncolumns_;
 
   public:
-    RecordBuilder(FieldVector fields) : ncolumns_(fields.size())
+    RecordBuilder(const SqlTypeInfo &info, const UserOptions &)
     {
+        FieldVector fields = info.field_builders;
+        ncolumns_ = fields.size();
+
         std::vector<std::shared_ptr<arrow::ArrayBuilder>> builders(ncolumns_);
         arrow::FieldVector fv(ncolumns_);
         for (size_t i = 0; i < ncolumns_; i++)
@@ -118,18 +115,13 @@ class RecordBuilder : public ColumnBuilder
     }
 };
 
-std::shared_ptr<ColumnBuilder> createRecordBuilder(FieldVector fields)
-{
-    return std::make_shared<RecordBuilder>(fields);
-}
-
 class TimeBuilder : public ColumnBuilder
 {
   private:
     arrow::Time64Builder *ptr_;
 
   public:
-    TimeBuilder()
+    TimeBuilder(const SqlTypeInfo &, const UserOptions &)
     {
         Builder = std::make_unique<arrow::Time64Builder>(
             arrow::time64(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
@@ -160,18 +152,11 @@ class TimestampBuilder : public ColumnBuilder
     arrow::TimestampBuilder *ptr_;
 
   public:
-    TimestampBuilder()
+    TimestampBuilder(const SqlTypeInfo &, const UserOptions &)
     {
+        // TODO timezone
         Builder = std::make_unique<arrow::TimestampBuilder>(
             arrow::timestamp(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
-        ptr_ = (arrow::TimestampBuilder *)Builder.get();
-    }
-
-    TimestampBuilder(const std::string &timezone)
-    {
-        Builder = std::make_unique<arrow::TimestampBuilder>(
-            arrow::timestamp(arrow::TimeUnit::MICRO, timezone),
-            arrow::default_memory_pool());
         ptr_ = (arrow::TimestampBuilder *)Builder.get();
     }
 
@@ -218,12 +203,17 @@ class NumericBuilder : public ColumnBuilder
 {
   private:
     arrow::Decimal128Builder *ptr_;
+    int precision_;
+    int scale_;
 
   public:
-    NumericBuilder(int precision, int scale)
+    NumericBuilder(const SqlTypeInfo &info, const UserOptions &)
     {
+        precision_ = info.typmod >> 16;
+        scale_ = info.typmod & 0xffff;
+
         Builder = std::make_unique<arrow::Decimal128Builder>(
-            arrow::decimal128(precision, scale));
+            arrow::decimal128(precision_, scale_));
         ptr_ = (arrow::Decimal128Builder *)Builder.get();
     }
 
@@ -243,7 +233,7 @@ class NumericBuilder : public ColumnBuilder
         int ndigits = ntoh16(rawdata->ndigits);
         int weight = ntoh16(rawdata->weight);
         int sign = ntoh16(rawdata->sign);
-        int scale = ntoh16(rawdata->dscale);
+        int scale = scale_; // ntoh16(rawdata->dscale);
         __int128_t value = 0;
         int d, dig;
 
@@ -292,18 +282,13 @@ class NumericBuilder : public ColumnBuilder
     }
 };
 
-std::shared_ptr<ColumnBuilder> createNumericBuilder(int precision, int scale)
-{
-    return std::make_shared<NumericBuilder>(precision, scale);
-}
-
 class IntervalBuilder : public ColumnBuilder
 {
   private:
     arrow::DurationBuilder *ptr_;
 
   public:
-    IntervalBuilder()
+    IntervalBuilder(const SqlTypeInfo &info, const UserOptions &)
     {
         Builder = std::make_unique<arrow::DurationBuilder>(
             arrow::duration(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
@@ -338,7 +323,7 @@ class BoxBuilder : public ColumnBuilder
     std::vector<std::shared_ptr<arrow::ArrayBuilder>> field_builders_;
 
   public:
-    BoxBuilder()
+    BoxBuilder(const SqlTypeInfo &info, const UserOptions &)
     {
         auto type = arrow::struct_({
             arrow::field("high.x", arrow::float64()),
@@ -395,7 +380,7 @@ class InetBuilder : public ColumnBuilder
     std::vector<std::shared_ptr<arrow::ArrayBuilder>> field_builders_;
 
   public:
-    InetBuilder()
+    InetBuilder(const SqlTypeInfo &info, const UserOptions &)
     {
         auto type = arrow::struct_({
             arrow::field("family", arrow::uint8()),
@@ -499,7 +484,7 @@ template <class BuilderT, typename RecvT> class GenericBuilder : public ColumnBu
     BuilderT *ptr_;
 
   public:
-    GenericBuilder()
+    GenericBuilder(const SqlTypeInfo &info, const UserOptions &)
     {
         Builder = std::make_unique<BuilderT>();
         ptr_ = (BuilderT *)Builder.get();
@@ -534,91 +519,97 @@ template <class BuilderT, typename RecvT> class GenericBuilder : public ColumnBu
     }
 };
 
-template <class T> std::shared_ptr<ColumnBuilder> create()
+template <class T>
+std::shared_ptr<ColumnBuilder>
+create(const SqlTypeInfo &info, const UserOptions &options)
 {
-    return std::make_shared<T>();
+    return std::make_shared<T>(info, options);
 }
 
-template <class T> std::shared_ptr<ColumnBuilder> createUTC()
-{
-    return std::make_shared<T>("utc");
-}
-
-std::map<std::string, std::shared_ptr<ColumnBuilder> (*)()> gDecoderFactory = {
-    {"bit_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"boolrecv", &create<GenericBuilder<arrow::BooleanBuilder, BoolRecv>>},
-    {"box_recv", &create<BoxBuilder>},
-    {"bpcharrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
-    {"brin_bloom_summary_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"brin_minmax_multi_summary_recv",
-     &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"bytearecv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"cash_recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
-    {"charrecv", &create<GenericBuilder<arrow::UInt8Builder, CharRecv>>},
-    {"cidr_recv", &create<InetBuilder>},
-    {"cidrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    // {"circle_recv", &create<Builder>}, center.x center.y radius f8
-    {"cstring_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"date_recv", &create<GenericBuilder<arrow::Date32Builder, DateRecv>>},
-    // {"domain_recv", &create<Builder>},
-    {"enum_recv", &create<GenericBuilder<arrow::StringDictionary32Builder, IdRecv>>},
-    {"float4recv", &create<GenericBuilder<arrow::FloatBuilder, Float4Recv>>},
-    {"float8recv", &create<GenericBuilder<arrow::DoubleBuilder, Float8Recv>>},
-    // {"hstore_recv", &create<Builder>},
-    {"inet_recv", &create<InetBuilder>},
-    {"int2recv", &create<GenericBuilder<arrow::Int16Builder, Int2Recv>>},
-    // {"int2vectorrecv", &create<Builder>},
-    {"int4recv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"int8recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
-    {"interval_recv", &create<IntervalBuilder>},
-    {"json_recv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
-    // {"jsonb_recv", &create<Builder>},
-    // {"jsonpath_recv", &create<Builder>},
-    // {"line_recv", &create<Builder>},
-    // {"lseg_recv", &create<Builder>},
-    {"macaddr_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"macaddr8_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    // {"multirange_recv", &create<Builder>},
-    {"namerecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
-    // {"numeric_recv", &create<Builder>},
-    {"oidrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    // {"oidvectorrecv", &create<Builder>},
-    // {"path_recv", &create<Builder>},
-    {"pg_dependencies_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"pg_lsn_recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
-    {"pg_mcv_list_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"pg_ndistinct_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    // {"pg_snapshot_recv", &create<Builder>},
-    // {"point_recv", &create<Builder>},
-    // {"poly_recv", &create<Builder>},
-    // {"range_recv", &create<Builder>},
-    {"regclassrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regcollationrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regconfigrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regdictionaryrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regnamespacerecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regoperatorrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regoperrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regprocedurerecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regprocrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regrolerecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"regtyperecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"textrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
-    // {"tidrecv", &create<Builder>},
-    {"time_recv", &create<TimeBuilder>},
-    // {"timetz_recv", &createUTC<TimeBuilder>},  // nope
-    {"timestamp_recv", &create<TimestampBuilder>},
-    {"timestamptz_recv", &createUTC<TimestampBuilder>},
-    // {"tsqueryrecv", &create<Builder>},
-    // {"tsvectorrecv", &create<Builder>},
-    {"unknownrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
-    {"uuid_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"varbit_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
-    {"varcharrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
-    // {"void_recv", &create<GenericBuilder<arrow::NullBuilder, IdRecv>>},
-    {"xid8recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
-    {"xidrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
-    {"xml_recv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
+std::map<
+    std::string,
+    std::shared_ptr<ColumnBuilder> (*)(const SqlTypeInfo &, const UserOptions &)>
+    gDecoderFactory = {
+        {"anyarray_recv", &create<ArrayBuilder>},
+        {"anycompatiblearray_recv", &create<ArrayBuilder>},
+        {"array_recv", &create<ArrayBuilder>},
+        {"bit_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"boolrecv", &create<GenericBuilder<arrow::BooleanBuilder, BoolRecv>>},
+        {"box_recv", &create<BoxBuilder>},
+        {"bpcharrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
+        {"brin_bloom_summary_recv",
+         &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"brin_minmax_multi_summary_recv",
+         &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"bytearecv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"cash_recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
+        {"charrecv", &create<GenericBuilder<arrow::UInt8Builder, CharRecv>>},
+        {"cidr_recv", &create<InetBuilder>},
+        {"cidrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        // {"circle_recv", &create<Builder>}, center.x center.y radius f8
+        {"cstring_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"date_recv", &create<GenericBuilder<arrow::Date32Builder, DateRecv>>},
+        // {"domain_recv", &create<Builder>},
+        {"enum_recv",
+         &create<GenericBuilder<arrow::StringDictionary32Builder, IdRecv>>},
+        {"float4recv", &create<GenericBuilder<arrow::FloatBuilder, Float4Recv>>},
+        {"float8recv", &create<GenericBuilder<arrow::DoubleBuilder, Float8Recv>>},
+        // {"hstore_recv", &create<Builder>},
+        {"inet_recv", &create<InetBuilder>},
+        {"int2recv", &create<GenericBuilder<arrow::Int16Builder, Int2Recv>>},
+        // {"int2vectorrecv", &create<Builder>},
+        {"int4recv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"int8recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
+        {"interval_recv", &create<IntervalBuilder>},
+        {"json_recv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
+        // {"jsonb_recv", &create<Builder>},
+        // {"jsonpath_recv", &create<Builder>},
+        // {"line_recv", &create<Builder>},
+        // {"lseg_recv", &create<Builder>},
+        {"macaddr_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"macaddr8_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        // {"multirange_recv", &create<Builder>},
+        {"namerecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
+        {"numeric_recv", &create<NumericBuilder>},
+        {"oidrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        // {"oidvectorrecv", &create<Builder>},
+        // {"path_recv", &create<Builder>},
+        {"pg_dependencies_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"pg_lsn_recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
+        {"pg_mcv_list_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"pg_ndistinct_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        // {"pg_snapshot_recv", &create<Builder>},
+        // {"point_recv", &create<Builder>},
+        // {"poly_recv", &create<Builder>},
+        // {"range_recv", &create<Builder>},
+        {"record_recv", &create<RecordBuilder>},
+        {"regclassrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regcollationrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regconfigrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regdictionaryrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regnamespacerecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regoperatorrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regoperrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regprocedurerecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regprocrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regrolerecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"regtyperecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"textrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
+        // {"tidrecv", &create<Builder>},
+        {"time_recv", &create<TimeBuilder>},
+        // {"timetz_recv", &createUTC<TimeBuilder>},  // nope
+        {"timestamp_recv", &create<TimestampBuilder>},
+        {"timestamptz_recv", &create<TimestampBuilder>},
+        // {"tsqueryrecv", &create<Builder>},
+        // {"tsvectorrecv", &create<Builder>},
+        {"unknownrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
+        {"uuid_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"varbit_recv", &create<GenericBuilder<arrow::BinaryBuilder, IdRecv>>},
+        {"varcharrecv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
+        // {"void_recv", &create<GenericBuilder<arrow::NullBuilder, IdRecv>>},
+        {"xid8recv", &create<GenericBuilder<arrow::Int64Builder, Int8Recv>>},
+        {"xidrecv", &create<GenericBuilder<arrow::Int32Builder, Int4Recv>>},
+        {"xml_recv", &create<GenericBuilder<arrow::StringBuilder, IdRecv>>},
 };
 
 } // namespace pgeon
