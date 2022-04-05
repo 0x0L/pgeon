@@ -185,4 +185,31 @@ void CopyQuery(PGconn *conn, const char *query, std::shared_ptr<TableBuilder> bu
     PQclear(res);
 }
 
+std::shared_ptr<arrow::Table> GetTable(const char* conninfo, const char* query)
+{
+    auto conn = PQconnectdb(conninfo);
+    if (PQstatus(conn) != CONNECTION_OK)
+        std::cout << "failed on PostgreSQL connection: " << PQerrorMessage(conn)
+                  << std::endl;
+
+    auto res = PQexec(conn, "BEGIN READ ONLY");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+        std::cout << "unable to begin transaction: " << PQresultErrorMessage(res)
+                  << std::endl;
+    PQclear(res);
+
+    auto builder = MakeQueryBuilder(conn, query);
+    CopyQuery(conn, query, builder);
+    auto table = builder->Flush();
+
+    res = PQexec(conn, "END");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+        std::cout << "unable to end transaction: " << PQresultErrorMessage(res)
+                  << std::endl;
+    PQclear(res);
+    PQfinish(conn);
+
+    return table;
+}
+
 } // namespace pgeon
