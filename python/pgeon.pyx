@@ -13,8 +13,10 @@ cdef extern from "../src/sql.h" namespace "pgeon":
 def Getoo(conninfo, query):
     cdef:
         shared_ptr[CTable] tbl
+        const char* c_conninfo = conninfo
+        const char* c_query = query
 
-    # with nogil:
-    tbl = GetTable(conninfo, query)
+    with nogil:
+        tbl = GetTable(c_conninfo, c_query)
 
     return wrap_table(tbl)
