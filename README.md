@@ -14,7 +14,7 @@ Fast data retrieval from a PostgreSQL database into Apache Arrow format.
 
     - make numeric work properly
 
-* Global refactor / cleanup / 
+* Global refactor / cleanup / style / build
 
 * Error handling
 
