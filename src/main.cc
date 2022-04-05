@@ -9,7 +9,7 @@ int main(int argc, char const *argv[])
     const char *conninfo = "postgresql://localhost/mytests";
     const char *query = "select * from minute_bars";
     // query = "select sum(volume) as my_sum from minute_bars";
-    query = "select * from numeric";
+    // query = "select * from numeric";
 
     auto table = GetTable(conninfo, query);
 

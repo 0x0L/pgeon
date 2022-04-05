@@ -6,7 +6,7 @@ import numpy as np
 import pyarrow as pa
 
 
-ext_modules = cythonize("pgeon.pyx", compiler_directives={'language_level' : "3"})
+ext_modules = cythonize("pgeon.pyx", compiler_directives={"language_level": "3"})
 
 for ext in ext_modules:
     # The Numpy C headers are currently required
@@ -15,11 +15,11 @@ for ext in ext_modules:
     ext.libraries.extend(pa.get_libraries())
     ext.library_dirs.extend(pa.get_library_dirs())
 
-    #ext.extra_objects = ["/Users/xav/src/Pgeon/build/liblibpgeon.a"]
+    # ext.extra_objects = ["/Users/xav/src/Pgeon/build/liblibpgeon.a"]
     ext.library_dirs.extend(["/Users/xav/src/Pgeon/python"])
     ext.libraries.extend(["libpgeon"])
-    if os.name == 'posix':
-        ext.extra_compile_args.append('-std=gnu++17')
+    if os.name == "posix":
+        ext.extra_compile_args.append("-std=gnu++17")
 
     # ext.extra_link_args.append("-stdlib=libstdc++")
 
