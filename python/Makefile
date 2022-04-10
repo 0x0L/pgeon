@@ -8,7 +8,7 @@ clean:
 	rm pgeon.cpython-*-darwin.so
 
 test:
-	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.Getoo(b'postgresql://localhost/mytests', b'select * from numeric_table').to_pandas(); print(t)"
-	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.Getoo(b'postgresql://localhost/mytests', b\"select (a_json->>'a')::int as u from json_table\").to_pandas(); print(t)"
-	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.Getoo(b'postgresql://localhost/mytests', b'select * from enum_table').to_pandas(); print(t)"
-	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.Getoo(b'postgresql://localhost/mytests', b'select * from minute_bars limit 10').to_pandas(); print(t)"
+	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.GetTable('postgresql://localhost/mytests', 'select * from numeric_table').to_pandas(); print(t)"
+	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.GetTable('postgresql://localhost/mytests', \"select (a_json->>'a')::int as u from json_table\").to_pandas(); print(t)"
+	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.GetTable('postgresql://localhost/mytests', 'select * from enum_table').to_pandas(); print(t)"
+	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.GetTable('postgresql://localhost/mytests', 'select * from minute_bars limit 10').to_pandas(); print(t)"

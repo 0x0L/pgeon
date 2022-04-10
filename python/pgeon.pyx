@@ -3,20 +3,21 @@
 from libcpp.memory cimport shared_ptr
 from pyarrow.lib cimport import_pyarrow, CTable
 from pyarrow cimport wrap_table
-from pyarrow.lib import tobytes
+
+from c_pgeon cimport GetTable as c_GetTable
 
 import_pyarrow()
 
-cdef extern from "../src/sql.h" namespace "pgeon":
-    cdef shared_ptr[CTable] GetTable(const char* conninfo, const char* query) nogil
+def GetTable(conninfo : str, query : str):
+    enc_conninfo = conninfo.encode('utf8')
+    enc_query = query.encode('utf8')
 
-def Getoo(conninfo, query):
     cdef:
         shared_ptr[CTable] tbl
-        const char* c_conninfo = conninfo
-        const char* c_query = query
+        const char* c_conninfo = enc_conninfo
+        const char* c_query = enc_query
 
     with nogil:
-        tbl = GetTable(c_conninfo, c_query)
+        tbl = c_GetTable(c_conninfo, c_query)
 
     return wrap_table(tbl)
