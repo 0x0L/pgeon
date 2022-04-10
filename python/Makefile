@@ -1,6 +1,6 @@
 all:
+	cp ../build/libpgeon.dylib .
 	MACOSX_DEPLOYMENT_TARGET=12.0 python setup.py build_ext --inplace
-	cp ../build/liblibpgeon.dylib .
 
 clean:
 	rm -fr build
@@ -8,4 +8,7 @@ clean:
 	rm pgeon.cpython-*-darwin.so
 
 test:
-	DYLD_LIBRARY_PATH="${PWD}" ipython -c "import pgeon; pgeon.Getoo(b'postgresql://localhost/mytests', b'select * from numeric').to_pandas()"
+	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.Getoo(b'postgresql://localhost/mytests', b'select * from numeric_table').to_pandas(); print(t)"
+	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.Getoo(b'postgresql://localhost/mytests', b\"select (a_json->>'a')::int as u from json_table\").to_pandas(); print(t)"
+	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.Getoo(b'postgresql://localhost/mytests', b'select * from enum_table').to_pandas(); print(t)"
+	DYLD_LIBRARY_PATH="${PWD}" python -c "import pgeon; t=pgeon.Getoo(b'postgresql://localhost/mytests', b'select * from minute_bars limit 10').to_pandas(); print(t)"

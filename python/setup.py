@@ -1,10 +1,9 @@
-from distutils.core import setup
-from Cython.Build import cythonize
-
 import os
+from distutils.core import setup
+
 import numpy as np
 import pyarrow as pa
-
+from Cython.Build import cythonize
 
 ext_modules = cythonize("pgeon.pyx", compiler_directives={"language_level": "3"})
 
@@ -17,7 +16,7 @@ for ext in ext_modules:
 
     # ext.extra_objects = ["/Users/xav/src/Pgeon/build/liblibpgeon.a"]
     ext.library_dirs.extend(["/Users/xav/src/Pgeon/python"])
-    ext.libraries.extend(["libpgeon"])
+    ext.libraries.extend(["pgeon"])
     if os.name == "posix":
         ext.extra_compile_args.append("-std=gnu++17")
 

@@ -26,7 +26,7 @@ INSERT INTO {{ name }} VALUES
 
 async def numerical_types(conn):
     query = _CREATE_TPL.render(
-        name="numeric",
+        name="numeric_table",
         types=[
             ("a_double", "double precision"),
             ("b_real", "real"),
@@ -47,9 +47,44 @@ async def numerical_types(conn):
     await conn.execute(query)
 
 
+async def json_types(conn):
+    query = _CREATE_TPL.render(
+        name="json_table",
+        types=[
+            ("a_json", "json"),
+        ],
+        values=[
+            """('{"a": 1}'::json)""",
+            """('{"a": 2}'::json)""",
+        ],
+    )
+    # print(query)
+    await conn.execute(query)
+
+
+async def enum_types(conn):
+    await conn.execute(
+        "DROP TYPE IF EXISTS mood CASCADE; CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');"
+    )
+    query = _CREATE_TPL.render(
+        name="enum_table",
+        types=[
+            ("a_mood", "mood"),
+        ],
+        values=[
+            "('sad')",
+            "('happy')",
+        ],
+    )
+    # print(query)
+    await conn.execute(query)
+
+
 async def main():
     conn = await asyncpg.connect(DB)
     await numerical_types(conn)
+    await json_types(conn)
+    await enum_types(conn)
     await conn.close()
 
 

@@ -118,7 +118,6 @@ WHERE
         typreceive == "array_recv")
     {
         sql_info.value_builder = MakeColumnBuilder(conn, typelem, mod);
-        // return createArrayBuilder(MakeColumnBuilder(conn, typelem));
     }
     else if (typreceive == "record_recv")
     {
@@ -130,8 +129,11 @@ WHERE
             fields.push_back({name, MakeColumnBuilder(conn, oid, mod)});
         }
         sql_info.field_builders = fields;
-        // return createRecordBuilder(fields);
     }
+
+    if (gDecoderFactory.count(typreceive) == 0)
+        return gDecoderFactory["bytearecv"](sql_info, options);
+
     return gDecoderFactory[typreceive](sql_info, options);
 }
 
@@ -185,7 +187,7 @@ void CopyQuery(PGconn *conn, const char *query, std::shared_ptr<TableBuilder> bu
     PQclear(res);
 }
 
-std::shared_ptr<arrow::Table> GetTable(const char* conninfo, const char* query)
+std::shared_ptr<arrow::Table> GetTable(const char *conninfo, const char *query)
 {
     auto conn = PQconnectdb(conninfo);
     if (PQstatus(conn) != CONNECTION_OK)
