@@ -1,11 +1,10 @@
-#include "sql.h"
+#include "pgeon.h"
 
 #include <iostream>
 #include <stdio.h>
 
 namespace pgeon
 {
-
 using ColumnVector = std::vector<std::tuple<std::string, Oid, int>>;
 
 ColumnVector ColumnTypesForQuery(PGconn *conn, const char *query)
