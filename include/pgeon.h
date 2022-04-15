@@ -6,10 +6,26 @@
 namespace pgeon
 {
 
-class ColumnBuilder;
+class ColumnBuilder
+{
+  public:
+    std::unique_ptr<arrow::ArrayBuilder> Builder;
+    virtual ~ColumnBuilder(){};
 
-using Field = std::pair<std::string, std::shared_ptr<ColumnBuilder>>;
-using FieldVector = std::vector<Field>;
+    // General format of a field is
+    // int32 length
+    // char[length] content if length > -1
+    virtual size_t Append(const char *buffer) = 0;
+
+    std::shared_ptr<arrow::DataType> type() { return Builder->type(); };
+
+    std::shared_ptr<arrow::Array> Flush()
+    {
+        std::shared_ptr<arrow::Array> array;
+        auto status = Builder->Finish(&array);
+        return array;
+    };
+};
 
 struct SqlTypeInfo
 {
@@ -33,31 +49,8 @@ struct UserOptions
     struct UserOptions static Defaults() { return UserOptions(); }
 };
 
-class ColumnBuilder
-{
-  public:
-    std::unique_ptr<arrow::ArrayBuilder> Builder;
-    virtual ~ColumnBuilder(){};
-
-    // General format of a field is
-    // int32 length
-    // char[length] content if length > -1
-    virtual size_t Append(const char *buffer) = 0;
-
-    std::shared_ptr<arrow::DataType> type() { return Builder->type(); };
-
-    std::shared_ptr<arrow::Array> Flush()
-    {
-        std::shared_ptr<arrow::Array> array;
-        auto status = Builder->Finish(&array);
-        return array;
-    };
-};
-
-extern std::map<
-    std::string,
-    std::shared_ptr<ColumnBuilder> (*)(const SqlTypeInfo &, const UserOptions &)>
-    gDecoderFactory;
+using Field = std::pair<std::string, std::shared_ptr<ColumnBuilder>>;
+using FieldVector = std::vector<Field>;
 
 class TableBuilder
 {

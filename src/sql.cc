@@ -75,6 +75,11 @@ WHERE
     return fields;
 }
 
+extern std::map<
+    std::string,
+    std::shared_ptr<ColumnBuilder> (*)(const SqlTypeInfo &, const UserOptions &)>
+    gDecoderFactory;
+
 // attname, attnum, atttypid, atttypmod, attlen,
 // attbyval, attalign, typtype, typrelid, typelem,
 // nspname, typname
