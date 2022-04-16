@@ -26,6 +26,7 @@ message(STATUS "Using Arrow ${ARROW_VERSION}")
 # find_package(OpenMP REQUIRED)
 # message(STATUS "Using OpenMP ${OpenMP_CXX_VERSION}")
 
+# Main library
 add_library(pgeon SHARED)
 target_sources(pgeon PRIVATE src/sql.cc src/decoders.cc)
 target_include_directories(pgeon PUBLIC include)
@@ -61,5 +62,5 @@ build_dir=${CMAKE_CURRENT_BINARY_DIR}/docs/python
       pgeon
     COMMENT "Building Python bindings to 'pgeon' library"
   )
-  add_custom_target(pgeon-python-bindings ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/python.stamp)
+  add_custom_target(pgeon-python ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/python.stamp)
 endif()

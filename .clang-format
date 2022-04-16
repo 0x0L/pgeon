@@ -1,5 +1,4 @@
-SortIncludes: CaseInsensitive
-AlignAfterOpenBracket: AlwaysBreak
-BreakBeforeBraces: Allman
-ColumnLimit: 88
-IndentWidth: 4
+BasedOnStyle: Google
+ColumnLimit: 90
+DerivePointerAlignment: false
+IncludeBlocks: Preserve

@@ -3,12 +3,13 @@
     "dockerComposeFile": "docker-compose.yml",
     "service": "app",
     "workspaceFolder": "/workspace",
-    "settings": {},
+    "settings": {
+        "cpplint.cpplintPath": "/opt/conda/bin/cpplint",
+        "cpplint.lineLength": 90
+    },
     "extensions": [
-        "ms-vscode.cmake-tools",
-        "ms-vscode.cpptools",
-        "ms-python.python",
-        "ms-python.vscode-pylance",
+        "ms-vscode.cpptools-extension-pack",
+        "mine.cpplint",
         "EditorConfig.EditorConfig",
         "adpyke.vscode-sql-formatter",
     ],
