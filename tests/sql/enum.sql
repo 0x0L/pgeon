@@ -1,6 +1,6 @@
-DROP TYPE IF EXISTS mood CASCADE;
-
 DROP TABLE IF EXISTS enum_table;
+
+DROP TYPE IF EXISTS mood CASCADE;
 
 CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
 

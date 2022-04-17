@@ -41,7 +41,7 @@ ColumnVector RecordTypeInfo(PGconn* conn, Oid oid) {
   char query[4096];
   snprintf(query, sizeof(query), R"(
 SELECT
-    attnum, attname, atttypid, atttypmod, atttyplen
+    attnum, attname, atttypid, atttypmod
 FROM
     pg_catalog.pg_attribute a,
     pg_catalog.pg_type t,
