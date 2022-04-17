@@ -5,7 +5,7 @@ message(STATUS "Using CMake ${CMAKE_VERSION}")
 project(
     pgeon
     VERSION 0.1
-    DESCRIPTION "Apache Arrow PostgreSQL copy connector"
+    DESCRIPTION "Apache Arrow PostgreSQL connector"
     HOMEPAGE_URL "https://github.com/0x0L/pgeon"
     LANGUAGES CXX
 )
@@ -36,6 +36,7 @@ target_sources(pgeon PRIVATE
     src/pgeon/builder/network.cc
     src/pgeon/builder/numeric.cc
     src/pgeon/builder/stringlike.cc
+    src/pgeon/builder/text_search.cc
     src/pgeon/builder.cc
     src/pgeon/table_builder.cc
     src/pgeon/sql_interface.cc

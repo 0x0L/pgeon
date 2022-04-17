@@ -11,6 +11,7 @@
 #include "pgeon/builder/network.h"
 #include "pgeon/builder/numeric.h"
 #include "pgeon/builder/stringlike.h"
+#include "pgeon/builder/text_search.h"
 
 namespace pgeon {
 
@@ -102,8 +103,8 @@ std::map<std::string,
         {"timetz_recv", &make<TimeTzBuilder>},
         {"timestamp_recv", &make<TimestampBuilder>},
         {"timestamptz_recv", &make<TimestampBuilder>},
-        // {"tsqueryrecv", &make<Builder>},
-        // {"tsvectorrecv", &make<Builder>},
+        {"tsqueryrecv", &make<TsQueryBuilder>},
+        {"tsvectorrecv", &make<TsVectorBuilder>},
         {"unknownrecv", &make<StringBuilder>},
         {"uuid_recv", &make<BinaryBuilder>},
         {"varbit_recv", &make<BinaryBuilder>},

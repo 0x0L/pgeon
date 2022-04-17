@@ -26,12 +26,13 @@ size_t JsonbBuilder::Append(const char* buf) {
 }
 
 HstoreBuilder::HstoreBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  key_builder_ = std::make_shared<arrow::StringBuilder>();
-  item_builder_ = std::make_shared<arrow::StringBuilder>();
+  auto status =
+      arrow::MakeBuilder(arrow::default_memory_pool(),
+                         arrow::map(arrow::utf8(), arrow::utf8()), &arrow_builder_);
 
-  arrow_builder_ = std::make_unique<arrow::MapBuilder>(arrow::default_memory_pool(),
-                                                       key_builder_, item_builder_);
   ptr_ = reinterpret_cast<arrow::MapBuilder*>(arrow_builder_.get());
+  key_builder_ = (arrow::StringBuilder*)ptr_->key_builder();
+  item_builder_ = (arrow::StringBuilder*)ptr_->item_builder();
 }
 
 size_t HstoreBuilder::Append(const char* buf) {

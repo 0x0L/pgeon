@@ -19,9 +19,9 @@ class JsonbBuilder : public ArrayBuilder {
 
 class HstoreBuilder : public ArrayBuilder {
  private:
-    std::shared_ptr<arrow::StringBuilder> key_builder_;
-    std::shared_ptr<arrow::StringBuilder> item_builder_;
-    arrow::MapBuilder* ptr_;
+  arrow::MapBuilder* ptr_;
+  arrow::StringBuilder* key_builder_;
+  arrow::StringBuilder* item_builder_;
 
  public:
   HstoreBuilder(const SqlTypeInfo& info, const UserOptions&);
