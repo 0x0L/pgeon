@@ -32,7 +32,7 @@ NumericBuilder::NumericBuilder(const SqlTypeInfo& info, const UserOptions& optio
   precision_ = ((info.typmod - VARHDRSZ) >> 16) & 0xffff;
   scale_ = (((info.typmod - VARHDRSZ) & 0x7ff) ^ 1024) - 1024;
 
-  // SQL standard requires scale_ = 0 which is convenient here...
+  // undefined precision decimals
   if (precision_ == 0xffff) {
     precision_ = options.default_numeric_precision;
     scale_ = options.default_numeric_scale;
@@ -97,6 +97,31 @@ size_t NumericBuilder::Append(const char* buf) {
 
   auto status = ptr_->Append(reinterpret_cast<uint8_t*>(&value));
 
+  return 4 + len;
+}
+
+MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo& info, const UserOptions& options) {
+  precision_ = options.default_numeric_precision;
+  scale_ = options.monetary_fractional_precision;
+
+  arrow_builder_ =
+      std::make_unique<arrow::Decimal128Builder>(arrow::decimal128(precision_, scale_));
+  ptr_ = (arrow::Decimal128Builder*)arrow_builder_.get();
+}
+
+size_t MonetaryBuilder::Append(const char* buf) {
+  int32_t len = unpack_int32(buf);
+  buf += 4;
+
+  if (len == -1) {
+    auto status = ptr_->AppendNull();
+    return 4;
+  }
+
+  __int128_t value = unpack_int64(buf);
+  buf += 8;
+
+  ptr_->Append(reinterpret_cast<uint8_t*>(&value));
   return 4 + len;
 }
 

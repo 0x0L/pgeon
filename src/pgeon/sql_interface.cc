@@ -30,6 +30,7 @@ ColumnVector ColumnTypesForQuery(PGconn* conn, const char* query) {
     Oid oid = PQftype(res, i);
     int mod = PQfmod(res, i);
     fields[i] = {name, oid, mod};
+    // std::cout << "field " << name << " len " << PQfsize(res, i) << std::endl;
   }
 
   PQclear(res);
@@ -80,7 +81,7 @@ std::shared_ptr<ArrayBuilder> MakeColumnBuilder(PGconn* conn, Oid oid, int mod) 
   char query[4096];
   snprintf(query, sizeof(query), R"(
 SELECT
-    typreceive, typelem, typrelid
+    typreceive, typelem, typrelid, typlen
 FROM
     pg_catalog.pg_type t,
     pg_catalog.pg_namespace n
@@ -99,8 +100,9 @@ WHERE
   std::string typreceive = PQgetvalue(res, 0, 0);
   Oid typelem = atooid(PQgetvalue(res, 0, 1));
   Oid typrelid = atooid(PQgetvalue(res, 0, 2));
+  int typlen = atoi(PQgetvalue(res, 0, 3));
 
-  SqlTypeInfo sql_info = {.typmod = mod};
+  SqlTypeInfo sql_info = {.typreceive = typreceive, .typmod = mod, .typlen = typlen};
 
   PQclear(res);
 
@@ -117,7 +119,7 @@ WHERE
     sql_info.field_builders = fields;
   }
 
-  return MakeBuilder(typreceive, sql_info, options);
+  return MakeBuilder(sql_info, options);
 }
 
 std::shared_ptr<TableBuilder> MakeTableBuilder(PGconn* conn, const char* query) {

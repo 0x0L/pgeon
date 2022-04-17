@@ -1,6 +1,7 @@
 // Copyright 2022 nullptr
 
 #include <map>
+#include <string>
 
 #include "pgeon/builder.h"
 
@@ -16,7 +17,6 @@
 
 namespace pgeon {
 
-using BinaryBuilder = GenericBuilder<arrow::BinaryBuilder, IdRecv>;
 using StringBuilder = GenericBuilder<arrow::StringBuilder, IdRecv>;
 
 using BooleanBuilder = GenericBuilder<arrow::BooleanBuilder, BoolRecv>;
@@ -44,7 +44,7 @@ std::map<std::string,
         {"brin_bloom_summary_recv", &make<BinaryBuilder>},
         {"brin_minmax_multi_summary_recv", &make<BinaryBuilder>},
         {"bytearecv", &make<BinaryBuilder>},
-        {"cash_recv", &make<Int64Builder>},
+        {"cash_recv", &make<MonetaryBuilder>},
         {"charrecv", &make<GenericBuilder<arrow::UInt8Builder, CharRecv>>},
         {"cidr_recv", &make<InetBuilder>},
         {"cidrecv", &make<Int32Builder>},
@@ -59,7 +59,7 @@ std::map<std::string,
         {"hstore_recv", &make<HstoreBuilder>},
         {"inet_recv", &make<InetBuilder>},
         {"int2recv", &make<GenericBuilder<arrow::Int16Builder, Int2Recv>>},
-        // {"int2vectorrecv", &make<Builder>},  // should need no implem
+        // {"int2vectorrecv", &make<>},  // should need no implem
         {"int4recv", &make<Int32Builder>},
         {"int8recv", &make<Int64Builder>},
         {"interval_recv", &make<IntervalBuilder>},
@@ -70,11 +70,11 @@ std::map<std::string,
         {"lseg_recv", &make<BoxBuilder>},
         {"macaddr_recv", &make<BinaryBuilder>},
         {"macaddr8_recv", &make<BinaryBuilder>},
-        // {"multirange_recv", &make<Builder>},
+        // {"multirange_recv", &make<Builder>},  // require more type info
         {"namerecv", &make<StringBuilder>},
         {"numeric_recv", &make<NumericBuilder>},
         {"oidrecv", &make<Int32Builder>},
-        // {"oidvectorrecv", &make<Builder>},  // should need no implem
+        // {"oidvectorrecv", &make<>},  // should need no implem
         {"path_recv", &make<PathBuilder>},
         {"pg_dependencies_recv", &make<BinaryBuilder>},
         {"pg_lsn_recv", &make<Int64Builder>},
@@ -83,7 +83,7 @@ std::map<std::string,
         {"pg_snapshot_recv", &make<PgSnapshotBuilder>},
         {"point_recv", &make<PointBuilder>},
         {"poly_recv", &make<PolygonBuilder>},
-        // {"range_recv", &make<Builder>},
+        // {"range_recv", &make<Builder>},  // require more type info
         {"record_recv", &make<StructBuilder>},
         {"regclassrecv", &make<Int32Builder>},
         {"regcollationrecv", &make<Int32Builder>},
@@ -114,11 +114,11 @@ std::map<std::string,
         {"xml_recv", &make<StringBuilder>},
 };
 
-std::shared_ptr<ArrayBuilder> MakeBuilder(const std::string& typreceive,
-                                          const SqlTypeInfo& info,
+std::shared_ptr<ArrayBuilder> MakeBuilder(const SqlTypeInfo& info,
                                           const UserOptions& options) {
-  return gTypeMap.count(typreceive) == 0 ? gTypeMap["bytearecv"](info, options)
-                                         : gTypeMap[typreceive](info, options);
+  bool found = gTypeMap.count(info.typreceive) > 0;
+  return found ? gTypeMap[info.typreceive](info, options)
+               : make<BinaryBuilder>(info, options);
 }
 
 }  // namespace pgeon

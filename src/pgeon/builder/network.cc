@@ -45,8 +45,7 @@ size_t InetBuilder::Append(const char* buf) {
   uint8_t nb = *buf;
   buf += 1;
 
-  if (nb > -1)
-    status = ipaddr_builder_->Append(buf, nb);
+  if (nb > -1) status = ipaddr_builder_->Append(buf, nb);
 
   return 4 + len;
 }

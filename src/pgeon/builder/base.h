@@ -35,7 +35,9 @@ using Field = std::pair<std::string, std::shared_ptr<ArrayBuilder>>;
 using FieldVector = std::vector<Field>;
 
 struct SqlTypeInfo {
-  int typmod;
+  std::string typreceive;
+  int typmod = -1;
+  int typlen = -1;
 
   // for ArrayBuilder
   std::shared_ptr<ArrayBuilder> value_builder;
@@ -48,6 +50,7 @@ struct UserOptions {
   bool string_as_dictionaries = false;
   int default_numeric_precision = 22;  // TODO(xav) max precision of 128 decimal ?
   int default_numeric_scale = 6;
+  int monetary_fractional_precision = 2;  // TODO(xav) lc_monetary
 
   struct UserOptions static Defaults() {
     return UserOptions();

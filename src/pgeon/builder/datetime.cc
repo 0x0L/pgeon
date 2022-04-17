@@ -50,10 +50,13 @@ size_t TimeTzBuilder::Append(const char* buf) {
   return 4 + len;
 }
 
-TimestampBuilder::TimestampBuilder(const SqlTypeInfo&, const UserOptions&) {
-  // TODO(xav) timezone
-  arrow_builder_ = std::make_unique<arrow::TimestampBuilder>(
-      arrow::timestamp(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
+TimestampBuilder::TimestampBuilder(const SqlTypeInfo& info, const UserOptions&) {
+  auto type = arrow::timestamp(arrow::TimeUnit::MICRO);
+  if (info.typreceive == "timestamptz_recv")
+    type = arrow::timestamp(arrow::TimeUnit::MICRO, "utc");
+
+  arrow_builder_ =
+      std::make_unique<arrow::TimestampBuilder>(type, arrow::default_memory_pool());
   ptr_ = (arrow::TimestampBuilder*)arrow_builder_.get();
 }
 

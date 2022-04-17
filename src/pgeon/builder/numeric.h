@@ -17,4 +17,15 @@ class NumericBuilder : public ArrayBuilder {
   size_t Append(const char* buf);
 };
 
+class MonetaryBuilder : public ArrayBuilder {
+ private:
+  arrow::Decimal128Builder* ptr_;
+  int precision_;
+  int scale_;
+
+ public:
+  MonetaryBuilder(const SqlTypeInfo& info, const UserOptions&);
+  size_t Append(const char* buf);
+};
+
 }  // namespace pgeon

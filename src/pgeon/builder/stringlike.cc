@@ -7,6 +7,38 @@
 
 namespace pgeon {
 
+BinaryBuilder::BinaryBuilder(const SqlTypeInfo& info, const UserOptions&) {
+  auto type = arrow::binary();
+  if (info.typlen > -1) type = arrow::fixed_size_binary(info.typlen);
+
+  auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
+
+  ptr_ = reinterpret_cast<arrow::ArrayBuilder*>(arrow_builder_.get());
+  binary_ptr_ = nullptr;
+  fixed_size_binary_ptr_ = nullptr;
+
+  if (info.typlen > -1) {
+    fixed_size_binary_ptr_ =
+        reinterpret_cast<arrow::FixedSizeBinaryBuilder*>(arrow_builder_.get());
+  } else {
+    binary_ptr_ = reinterpret_cast<arrow::BinaryBuilder*>(arrow_builder_.get());
+  }
+}
+
+size_t BinaryBuilder::Append(const char* buf) {
+  int32_t len = unpack_int32(buf);
+  buf += 4;
+
+  if (len == -1) {
+    auto status = ptr_->AppendNull();
+    return 4;
+  }
+
+  auto status = binary_ptr_ != nullptr ? binary_ptr_->Append(buf, len)
+                                       : fixed_size_binary_ptr_->Append(buf);
+  return 4 + len;
+}
+
 JsonbBuilder::JsonbBuilder(const SqlTypeInfo& info, const UserOptions&) {
   arrow_builder_ = std::make_unique<arrow::StringBuilder>();
   ptr_ = reinterpret_cast<arrow::StringBuilder*>(arrow_builder_.get());

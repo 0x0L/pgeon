@@ -8,6 +8,17 @@
 
 namespace pgeon {
 
+class BinaryBuilder : public ArrayBuilder {
+ private:
+  arrow::ArrayBuilder* ptr_;
+  arrow::BinaryBuilder* binary_ptr_;
+  arrow::FixedSizeBinaryBuilder* fixed_size_binary_ptr_;
+
+ public:
+  BinaryBuilder(const SqlTypeInfo& info, const UserOptions&);
+  size_t Append(const char* buf);
+};
+
 class JsonbBuilder : public ArrayBuilder {
  private:
   arrow::StringBuilder* ptr_;
