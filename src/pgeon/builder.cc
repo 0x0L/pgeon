@@ -7,6 +7,7 @@
 #include "pgeon/builder/common.h"
 #include "pgeon/builder/datetime.h"
 #include "pgeon/builder/geometric.h"
+#include "pgeon/builder/misc.h"
 #include "pgeon/builder/nested.h"
 #include "pgeon/builder/network.h"
 #include "pgeon/builder/numeric.h"
@@ -79,8 +80,7 @@ std::map<std::string,
         {"pg_lsn_recv", &make<Int64Builder>},
         {"pg_mcv_list_recv", &make<BinaryBuilder>},
         {"pg_ndistinct_recv", &make<BinaryBuilder>},
-        // format: int4 nxip, u64 xmin, u64 xmax, u64 xip...
-        // {"pg_snapshot_recv", &make<Builder>},
+        {"pg_snapshot_recv", &make<PgSnapshotBuilder>},
         {"point_recv", &make<PointBuilder>},
         {"poly_recv", &make<PolygonBuilder>},
         // {"range_recv", &make<Builder>},
@@ -97,8 +97,7 @@ std::map<std::string,
         {"regrolerecv", &make<Int32Builder>},
         {"regtyperecv", &make<Int32Builder>},
         {"textrecv", &make<StringBuilder>},
-        // format: int4 block, int2 offset
-        // {"tidrecv", &make<Builder>},
+        {"tidrecv", &make<TidBuilder>},
         {"time_recv", &make<TimeBuilder>},
         {"timetz_recv", &make<TimeTzBuilder>},
         {"timestamp_recv", &make<TimestampBuilder>},
@@ -109,7 +108,7 @@ std::map<std::string,
         {"uuid_recv", &make<BinaryBuilder>},
         {"varbit_recv", &make<BinaryBuilder>},
         {"varcharrecv", &make<StringBuilder>},
-        // {"void_recv", &make<GenericBuilder<arrow::NullBuilder, IdRecv>>},
+        {"void_recv", &make<NullBuilder>},
         {"xid8recv", &make<Int64Builder>},
         {"xidrecv", &make<Int32Builder>},
         {"xml_recv", &make<StringBuilder>},

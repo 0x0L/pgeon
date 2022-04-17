@@ -32,6 +32,7 @@ add_library(pgeon SHARED)
 target_sources(pgeon PRIVATE
     src/pgeon/builder/datetime.cc
     src/pgeon/builder/geometric.cc
+    src/pgeon/builder/misc.cc
     src/pgeon/builder/nested.cc
     src/pgeon/builder/network.cc
     src/pgeon/builder/numeric.cc
