@@ -1,8 +1,5 @@
 // Copyright 2022 nullptr
 
-#include <iostream>
-#include <utility>
-
 #include "pgeon/builder/common.h"
 #include "pgeon/builder/geometric.h"
 

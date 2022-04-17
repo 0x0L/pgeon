@@ -15,6 +15,15 @@ class TimeBuilder : public ArrayBuilder {
   size_t Append(const char* buf);
 };
 
+class TimeTzBuilder : public ArrayBuilder {
+ private:
+  arrow::Time64Builder* ptr_;
+
+ public:
+  TimeTzBuilder(const SqlTypeInfo&, const UserOptions&);
+  size_t Append(const char* buf);
+};
+
 class TimestampBuilder : public ArrayBuilder {
  private:
   arrow::TimestampBuilder* ptr_;
