@@ -31,16 +31,16 @@ EOF
 
 ## TODO
 
-* Tests
+* Tests & benchmarks
 
-* Benchmarks
+* Multi platform build / deploy
+
+* Error handling
+
+* Batchbuilder
 
 * User options
 
     - control which strings (or columns) should be dict encoded
 
-* Global refactor / cleanup / style / build
-
-* Error handling
-
-* Batchbuilder
+    - review of bytes vs string and encoding

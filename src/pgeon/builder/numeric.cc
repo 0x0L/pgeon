@@ -26,9 +26,17 @@ struct _NumericHelper {
   int16_t digits[];
 };
 
-NumericBuilder::NumericBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  precision_ = info.typmod >> 16;
-  scale_ = info.typmod & 0xffff;
+#define VARHDRSZ ((int32_t)sizeof(int32_t))
+
+NumericBuilder::NumericBuilder(const SqlTypeInfo& info, const UserOptions& options) {
+  precision_ = ((info.typmod - VARHDRSZ) >> 16) & 0xffff;
+  scale_ = (((info.typmod - VARHDRSZ) & 0x7ff) ^ 1024) - 1024;
+
+  // SQL standard requires scale_ = 0 which is convenient here...
+  if (precision_ == 0xffff) {
+    precision_ = options.default_numeric_precision;
+    scale_ = options.default_numeric_scale;
+  }
 
   arrow_builder_ =
       std::make_unique<arrow::Decimal128Builder>(arrow::decimal128(precision_, scale_));
@@ -50,6 +58,7 @@ size_t NumericBuilder::Append(const char* buf) {
   int weight = ntoh16(rawdata->weight);
   int sign = ntoh16(rawdata->sign);
   int scale = scale_;  // ntoh16(rawdata->dscale);
+
   __int128_t value = 0;
   int d, dig;
 

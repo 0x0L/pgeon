@@ -46,6 +46,8 @@ struct SqlTypeInfo {
 
 struct UserOptions {
   bool string_as_dictionaries = false;
+  int default_numeric_precision = 22;  // TODO(xav) max precision of 128 decimal ?
+  int default_numeric_scale = 6;
 
   struct UserOptions static Defaults() {
     return UserOptions();
