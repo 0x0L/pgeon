@@ -33,4 +33,7 @@ std::shared_ptr<arrow::Table> CopyTable(const char* conninfo, const char* query)
   return table;
 }
 
+// void CopyBatch(const char* conninfo, const char* query, size_t batch_size,
+//                void (*callback)(std::shared_ptr<arrow::RecordBatch>)) {}
+
 }  // namespace pgeon

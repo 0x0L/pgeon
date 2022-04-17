@@ -12,7 +12,10 @@ namespace pgeon {
 class InetBuilder : public ArrayBuilder {
  private:
   arrow::StructBuilder* ptr_;
-  std::vector<std::shared_ptr<arrow::ArrayBuilder>> field_builders_;
+  arrow::UInt8Builder* family_builder_;
+  arrow::UInt8Builder* bits_builder_;
+  arrow::BooleanBuilder* is_cidr_builder_;
+  arrow::BinaryBuilder* ipaddr_builder_;
 
  public:
   InetBuilder(const SqlTypeInfo& info, const UserOptions&);

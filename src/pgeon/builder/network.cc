@@ -13,16 +13,13 @@ InetBuilder::InetBuilder(const SqlTypeInfo& info, const UserOptions&) {
       arrow::field("ipaddr", arrow::binary()),
   });
 
-  field_builders_ = {
-      std::make_shared<arrow::UInt8Builder>(),
-      std::make_shared<arrow::UInt8Builder>(),
-      std::make_shared<arrow::BooleanBuilder>(),
-      std::make_shared<arrow::BinaryBuilder>(),
-  };
-
-  arrow_builder_ = std::make_unique<arrow::StructBuilder>(
-      type, arrow::default_memory_pool(), field_builders_);
+  auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
   ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
+
+  family_builder_ = (arrow::UInt8Builder*)ptr_->child(0);
+  bits_builder_ = (arrow::UInt8Builder*)ptr_->child(1);
+  is_cidr_builder_ = (arrow::BooleanBuilder*)ptr_->child(2);
+  ipaddr_builder_ = (arrow::BinaryBuilder*)ptr_->child(3);
 }
 
 size_t InetBuilder::Append(const char* buf) {
@@ -36,19 +33,20 @@ size_t InetBuilder::Append(const char* buf) {
 
   auto status = ptr_->Append();
 
-  status = ((arrow::UInt8Builder*)field_builders_[0].get())->Append(*buf);
+  status = family_builder_->Append(*buf);
   buf += 1;
 
-  status = ((arrow::UInt8Builder*)field_builders_[1].get())->Append(*buf);
+  status = bits_builder_->Append(*buf);
   buf += 1;
 
-  status = ((arrow::BooleanBuilder*)field_builders_[2].get())->Append(*buf != 0);
+  status = is_cidr_builder_->Append(*buf != 0);
   buf += 1;
 
   uint8_t nb = *buf;
   buf += 1;
 
-  status = ((arrow::BinaryBuilder*)field_builders_[3].get())->Append(buf, nb);
+  if (nb > -1)
+    status = ipaddr_builder_->Append(buf, nb);
 
   return 4 + len;
 }

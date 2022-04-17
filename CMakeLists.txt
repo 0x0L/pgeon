@@ -30,19 +30,22 @@ message(STATUS "Using Arrow ${ARROW_VERSION}")
 add_library(pgeon SHARED)
 
 target_sources(pgeon PRIVATE
-src/pgeon/builder/datetime.cc
-src/pgeon/builder/geometric.cc
-src/pgeon/builder/nested.cc
-src/pgeon/builder/network.cc
-src/pgeon/builder/numeric.cc
-src/pgeon/builder/stringlike.cc
-src/pgeon/builder.cc
-src/pgeon/table_builder.cc
-src/pgeon/sql_interface.cc
-src/pgeon/api.cc
+    src/pgeon/builder/datetime.cc
+    src/pgeon/builder/geometric.cc
+    src/pgeon/builder/nested.cc
+    src/pgeon/builder/network.cc
+    src/pgeon/builder/numeric.cc
+    src/pgeon/builder/stringlike.cc
+    src/pgeon/builder.cc
+    src/pgeon/table_builder.cc
+    src/pgeon/sql_interface.cc
+    src/pgeon/api.cc
 )
+
 target_include_directories(pgeon PRIVATE src)
+
 target_include_directories(pgeon PUBLIC include)
+
 target_link_libraries(pgeon PUBLIC arrow_shared PostgreSQL::PostgreSQL)
 # target_link_libraries(pgeon PUBLIC OpenMP::OpenMP_CXX)
 
