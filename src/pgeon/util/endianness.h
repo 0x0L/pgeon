@@ -15,8 +15,7 @@
  * SPDX-License-Identifier: MIT OR Apache-2.0
  */
 
-#ifndef SRC_ENDIANNESS_H_
-#define SRC_ENDIANNESS_H_
+#pragma once
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -187,5 +186,3 @@ static inline double bswapd(double d) {
 #else
 #warning "UNKNOWN Platform / endianness; network / host byte swaps not defined."
 #endif
-
-#endif  // SRC_ENDIANNESS_H_

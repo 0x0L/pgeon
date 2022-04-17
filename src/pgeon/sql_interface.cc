@@ -1,11 +1,17 @@
 // Copyright 2022 nullptr
 
-#include <pgeon.h>
+#include <libpq-fe.h>
 
-#include <stdio.h>
 #include <iostream>
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include "pgeon/builder.h"
+#include "pgeon/sql_interface.h"
 
 namespace pgeon {
+
 using ColumnVector = std::vector<std::tuple<std::string, Oid, int>>;
 
 ColumnVector ColumnTypesForQuery(PGconn* conn, const char* query) {
@@ -68,15 +74,7 @@ WHERE
   return fields;
 }
 
-extern std::map<std::string, std::shared_ptr<ColumnBuilder> (*)(const SqlTypeInfo&,
-                                                                const UserOptions&)>
-    gDecoderFactory;
-
-// attname, attnum, atttypid, atttypmod, attlen,
-// attbyval, attalign, typtype, typrelid, typelem,
-// nspname, typname
-
-std::shared_ptr<ColumnBuilder> MakeColumnBuilder(PGconn* conn, Oid oid, int mod) {
+std::shared_ptr<ArrayBuilder> MakeColumnBuilder(PGconn* conn, Oid oid, int mod) {
   const UserOptions& options = UserOptions::Defaults();
 
   char query[4096];
@@ -119,13 +117,10 @@ WHERE
     sql_info.field_builders = fields;
   }
 
-  if (gDecoderFactory.count(typreceive) == 0)
-    return gDecoderFactory["bytearecv"](sql_info, options);
-
-  return gDecoderFactory[typreceive](sql_info, options);
+  return MakeBuilder(typreceive, sql_info, options);
 }
 
-std::shared_ptr<TableBuilder> MakeQueryBuilder(PGconn* conn, const char* query) {
+std::shared_ptr<TableBuilder> MakeTableBuilder(PGconn* conn, const char* query) {
   auto columns = ColumnTypesForQuery(conn, query);
   FieldVector fields;
   for (auto& [name, oid, mod] : columns) {
@@ -135,7 +130,7 @@ std::shared_ptr<TableBuilder> MakeQueryBuilder(PGconn* conn, const char* query) 
   return std::make_shared<TableBuilder>(fields);
 }
 
-void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder) {
+void CopyTable(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder) {
   auto copy_query = std::string("COPY (") + query + ") TO STDOUT (FORMAT binary)";
   auto res = PQexec(conn, copy_query.c_str());
   if (PQresultStatus(res) != PGRES_COPY_OUT)
@@ -166,30 +161,6 @@ void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> bu
   if (PQresultStatus(res) != PGRES_COMMAND_OK)
     std::cout << "copy command failed: " << PQresultErrorMessage(res) << std::endl;
   PQclear(res);
-}
-
-std::shared_ptr<arrow::Table> GetTable(const char* conninfo, const char* query) {
-  auto conn = PQconnectdb(conninfo);
-  if (PQstatus(conn) != CONNECTION_OK)
-    std::cout << "failed on PostgreSQL connection: " << PQerrorMessage(conn) << std::endl;
-
-  auto res = PQexec(conn, "BEGIN READ ONLY");
-  if (PQresultStatus(res) != PGRES_COMMAND_OK)
-    std::cout << "unable to begin transaction: " << PQresultErrorMessage(res)
-              << std::endl;
-  PQclear(res);
-
-  auto builder = MakeQueryBuilder(conn, query);
-  CopyQuery(conn, query, builder);
-  auto table = builder->Flush();
-
-  res = PQexec(conn, "END");
-  if (PQresultStatus(res) != PGRES_COMMAND_OK)
-    std::cout << "unable to end transaction: " << PQresultErrorMessage(res) << std::endl;
-  PQclear(res);
-  PQfinish(conn);
-
-  return table;
 }
 
 }  // namespace pgeon

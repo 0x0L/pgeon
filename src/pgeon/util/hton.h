@@ -1,8 +1,7 @@
 // Copyright 2022 asynpg team
 // origin https://github.com/MagicStack/py-pgproto/blob/master/hton.h
 
-#ifndef SRC_HTON_H_
-#define SRC_HTON_H_
+#pragma once
 
 #include "./endianness.h"
 
@@ -89,5 +88,3 @@ static inline double unpack_double(const char* buf) {
   v.i = (uint64_t)unpack_int64(buf);
   return v.f;
 }
-
-#endif  // SRC_HTON_H_

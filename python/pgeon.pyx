@@ -5,13 +5,13 @@ from pyarrow.lib cimport import_pyarrow, CTable
 from pyarrow cimport wrap_table
 
 cdef extern from "pgeon.h" namespace "pgeon":
-    cdef shared_ptr[CTable] GetTable(const char* conninfo, const char* query) nogil
+    cdef shared_ptr[CTable] CopyTable(const char* conninfo, const char* query) nogil
 
 
 import_pyarrow()
 
 
-def get_table(conninfo : str, query : str):
+def copy_table(conninfo : str, query : str):
     enc_conninfo = conninfo.encode('utf8')
     enc_query = query.encode('utf8')
 
@@ -21,6 +21,6 @@ def get_table(conninfo : str, query : str):
         const char* c_query = enc_query
 
     with nogil:
-        tbl = GetTable(c_conninfo, c_query)
+        tbl = CopyTable(c_conninfo, c_query)
 
     return wrap_table(tbl)

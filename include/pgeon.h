@@ -1,86 +1,13 @@
 // Copyright 2022 nullptr
 
-#ifndef PGEON_H_
-#define PGEON_H_
+#pragma once
 
 #include <arrow/api.h>
-#include <libpq-fe.h>
 
-#include <map>
 #include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace pgeon {
 
-class ColumnBuilder {
- public:
-  std::unique_ptr<arrow::ArrayBuilder> Builder;
-  virtual ~ColumnBuilder() {}
-
-  // General format of a field is
-  // int32 length
-  // char[length] content if length > -1
-  virtual size_t Append(const char* buffer) = 0;
-
-  std::shared_ptr<arrow::DataType> type() { return Builder->type(); }
-
-  std::shared_ptr<arrow::Array> Flush() {
-    std::shared_ptr<arrow::Array> array;
-    auto status = Builder->Finish(&array);
-    return array;
-  }
-};
-
-struct SqlTypeInfo {
-  // attname, attnum, atttypid, atttypmod, attlen,
-  // attbyval, attalign, typtype, typrelid, typelem,
-  // nspname, typname
-
-  int typmod;
-
-  // ListBuilder
-  std::shared_ptr<ColumnBuilder> value_builder;
-
-  // StructBuilder
-  std::vector<std::pair<std::string, std::shared_ptr<ColumnBuilder>>> field_builders;
-};
-
-struct UserOptions {
-  bool string_as_dictionaries = false;
-
-  struct UserOptions static Defaults() {
-    return UserOptions();
-  }
-};
-
-using Field = std::pair<std::string, std::shared_ptr<ColumnBuilder>>;
-using FieldVector = std::vector<Field>;
-
-class TableBuilder {
- private:
-  FieldVector fields_;
-  std::vector<ColumnBuilder*> builders_;
-  std::shared_ptr<arrow::Schema> schema_;
-  // std::vector<int32_t> fields_offsets_;
-
- public:
-  explicit TableBuilder(const FieldVector& fields);
-
-  int32_t Append(const char* cursor);
-
-  std::shared_ptr<arrow::Table> Flush();
-
-  // TODO(xav): Flush to batch
-};
-
-std::shared_ptr<TableBuilder> MakeQueryBuilder(PGconn* conn, const char* query);
-
-void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder);
-
-std::shared_ptr<arrow::Table> GetTable(const char* conninfo, const char* query);
+std::shared_ptr<arrow::Table> CopyTable(const char* conninfo, const char* query);
 
 }  // namespace pgeon
-
-#endif  // PGEON_H_
