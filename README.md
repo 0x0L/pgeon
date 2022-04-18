@@ -41,6 +41,8 @@ EOF
 
 * User options
 
-    - control which strings (or columns) should be dict encoded
+    - control which strings (or columns) should be dict encoded. maybe as a default char varchar should be dict encoded and text should be large_utf8
 
     - review of bytes vs string and encoding
+
+* Output format for bit(..)

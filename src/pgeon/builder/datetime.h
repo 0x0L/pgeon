@@ -35,7 +35,7 @@ class TimestampBuilder : public ArrayBuilder {
 
 class IntervalBuilder : public ArrayBuilder {
  private:
-  arrow::DurationBuilder* ptr_;
+  arrow::MonthDayNanoIntervalBuilder* ptr_;
 
  public:
   IntervalBuilder(const SqlTypeInfo& info, const UserOptions&);

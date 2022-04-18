@@ -77,9 +77,9 @@ size_t TimestampBuilder::Append(const char* buf) {
 }
 
 IntervalBuilder::IntervalBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  arrow_builder_ = std::make_unique<arrow::DurationBuilder>(
-      arrow::duration(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
-  ptr_ = (arrow::DurationBuilder*)arrow_builder_.get();
+  auto status = arrow::MakeBuilder(arrow::default_memory_pool(),
+                                   arrow::month_day_nano_interval(), &arrow_builder_);
+  ptr_ = (arrow::MonthDayNanoIntervalBuilder*)arrow_builder_.get();
 }
 
 size_t IntervalBuilder::Append(const char* buf) {
@@ -92,10 +92,10 @@ size_t IntervalBuilder::Append(const char* buf) {
   }
 
   static const int64_t kMicrosecondsPerDay = 24 * 3600 * 1000000LL;
-  int64_t usecs = unpack_int64(buf);
+  int64_t nanosecs = unpack_int64(buf) * 1000LL;
   int32_t days = unpack_int32(buf + 8);
-  // int32_t months = unpack_int32(cursor + 12);
-  auto status = ptr_->Append(usecs + days * kMicrosecondsPerDay);
+  int32_t months = unpack_int32(buf + 12);
+  auto status = ptr_->Append({.months = months, .days = days, .nanoseconds = nanosecs});
 
   return 4 + len;
 }
