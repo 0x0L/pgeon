@@ -20,12 +20,12 @@ cd /workspace/python/build/lib.linux-x86_64-cpython-310
 
 python <<EOF
 import os
-from pgeon import copy_table
+from pgeon import copy_query
 
 connstr = os.environ["POSTGRES_CONN"]
 req = "select * from numeric_table"
 
-print(copy_table(connstr, req))
+print(copy_query(connstr, req))
 EOF
 ```
 

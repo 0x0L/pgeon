@@ -132,7 +132,7 @@ std::shared_ptr<TableBuilder> MakeTableBuilder(PGconn* conn, const char* query) 
   return std::make_shared<TableBuilder>(fields);
 }
 
-void CopyTable(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder) {
+void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder) {
   auto copy_query = std::string("COPY (") + query + ") TO STDOUT (FORMAT binary)";
   auto res = PQexec(conn, copy_query.c_str());
   if (PQresultStatus(res) != PGRES_COPY_OUT)

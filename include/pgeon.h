@@ -8,6 +8,6 @@
 
 namespace pgeon {
 
-std::shared_ptr<arrow::Table> CopyTable(const char* conninfo, const char* query);
+std::shared_ptr<arrow::Table> CopyQuery(const char* conninfo, const char* query);
 
 }  // namespace pgeon

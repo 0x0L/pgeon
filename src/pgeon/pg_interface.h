@@ -14,6 +14,6 @@ std::shared_ptr<ArrayBuilder> MakeColumnBuilder(PGconn* conn, Oid oid, int mod);
 
 std::shared_ptr<TableBuilder> MakeTableBuilder(PGconn* conn, const char* query);
 
-void CopyTable(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder);
+void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder);
 
 }  // namespace pgeon
