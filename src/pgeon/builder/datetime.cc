@@ -8,8 +8,9 @@
 namespace pgeon {
 
 TimeBuilder::TimeBuilder(const SqlTypeInfo&, const UserOptions&) {
-  arrow_builder_ = std::make_unique<arrow::Time64Builder>(
-      arrow::time64(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
+  auto status =
+      arrow::MakeBuilder(arrow::default_memory_pool(),
+                         arrow::time64(arrow::TimeUnit::MICRO), &arrow_builder_);
   ptr_ = (arrow::Time64Builder*)arrow_builder_.get();
 }
 
@@ -29,8 +30,9 @@ size_t TimeBuilder::Append(const char* buf) {
 }
 
 TimeTzBuilder::TimeTzBuilder(const SqlTypeInfo&, const UserOptions&) {
-  arrow_builder_ = std::make_unique<arrow::Time64Builder>(
-      arrow::time64(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
+  auto status =
+      arrow::MakeBuilder(arrow::default_memory_pool(),
+                         arrow::time64(arrow::TimeUnit::MICRO), &arrow_builder_);
   ptr_ = (arrow::Time64Builder*)arrow_builder_.get();
 }
 
@@ -55,8 +57,7 @@ TimestampBuilder::TimestampBuilder(const SqlTypeInfo& info, const UserOptions&) 
   if (info.typreceive == "timestamptz_recv")
     type = arrow::timestamp(arrow::TimeUnit::MICRO, "utc");
 
-  arrow_builder_ =
-      std::make_unique<arrow::TimestampBuilder>(type, arrow::default_memory_pool());
+  auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
   ptr_ = (arrow::TimestampBuilder*)arrow_builder_.get();
 }
 
