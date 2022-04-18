@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "pgeon/builder.h"
-#include "pgeon/sql_interface.h"
+#include "pgeon/pg_interface.h"
 
 namespace pgeon {
 

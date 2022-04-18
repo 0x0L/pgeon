@@ -40,7 +40,7 @@ target_sources(pgeon PRIVATE
     src/pgeon/builder/text_search.cc
     src/pgeon/builder.cc
     src/pgeon/table_builder.cc
-    src/pgeon/sql_interface.cc
+    src/pgeon/pg_interface.cc
     src/pgeon/api.cc
 )
 
