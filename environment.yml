@@ -3,34 +3,14 @@ channels:
   - conda-forge
 dependencies:
   # required
-  # - python=3.10
-  - arrow-cpp>=7.0
-  - pyarrow>=7.0
+  - python
+  - arrow-cpp
+  - pyarrow
   - libpq
 
   # The compiler packages are meta-packages and install the correct compiler (activation) packages on the respective platforms.
   - c-compiler
   - cxx-compiler
-  - cython
-  - make
-  - cmake
-  - ninja
+
+  # Dev
   - git
-
-  # code checks
-  - cpplint
-
-  # testing
-  - gdb
-  - ipython
-  - postgresql
-  - asyncpg
-  - pandas
-  - jinja2
-  - pytest
-  - pytest-cov
-  - pytest-xdist
-
-  # benchmarks
-  - matplotlib-base
-  - seaborn

@@ -7,8 +7,8 @@
 #include <tuple>
 #include <vector>
 
-#include "pgeon/builder.h"
-#include "pgeon/pg_interface.h"
+#include "builder.h"
+#include "pg_interface.h"
 
 namespace pgeon {
 

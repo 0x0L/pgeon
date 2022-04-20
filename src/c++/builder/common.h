@@ -5,8 +5,8 @@
 #include <cmath>
 #include <memory>
 
-#include "pgeon/builder/base.h"
-#include "pgeon/util/hton.h"
+#include "builder/base.h"
+#include "util/hton.h"
 
 namespace pgeon {
 

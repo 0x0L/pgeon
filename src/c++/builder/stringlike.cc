@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "pgeon/builder/common.h"
-#include "pgeon/builder/stringlike.h"
+#include "builder/common.h"
+#include "builder/stringlike.h"
 
 namespace pgeon {
 

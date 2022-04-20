@@ -1,7 +1,7 @@
 // Copyright 2022 nullptr
 
-#include "pgeon/builder/geometric.h"
-#include "pgeon/builder/common.h"
+#include "builder/geometric.h"
+#include "builder/common.h"
 
 namespace pgeon {
 

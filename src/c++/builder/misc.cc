@@ -1,7 +1,7 @@
 // Copyright 2022 nullptr
 
-#include "pgeon/builder/misc.h"
-#include "pgeon/builder/common.h"
+#include "builder/misc.h"
+#include "builder/common.h"
 
 namespace pgeon {
 

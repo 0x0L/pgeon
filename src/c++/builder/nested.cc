@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "pgeon/builder/common.h"
-#include "pgeon/builder/nested.h"
+#include "builder/common.h"
+#include "builder/nested.h"
 
 namespace pgeon {
 

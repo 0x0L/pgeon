@@ -3,17 +3,17 @@
 #include <map>
 #include <string>
 
-#include "pgeon/builder.h"
+#include "builder.h"
 
-#include "pgeon/builder/common.h"
-#include "pgeon/builder/datetime.h"
-#include "pgeon/builder/geometric.h"
-#include "pgeon/builder/misc.h"
-#include "pgeon/builder/nested.h"
-#include "pgeon/builder/network.h"
-#include "pgeon/builder/numeric.h"
-#include "pgeon/builder/stringlike.h"
-#include "pgeon/builder/text_search.h"
+#include "builder/common.h"
+#include "builder/datetime.h"
+#include "builder/geometric.h"
+#include "builder/misc.h"
+#include "builder/nested.h"
+#include "builder/network.h"
+#include "builder/numeric.h"
+#include "builder/stringlike.h"
+#include "builder/text_search.h"
 
 namespace pgeon {
 

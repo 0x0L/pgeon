@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "pgeon/builder/common.h"
-#include "pgeon/builder/numeric.h"
+#include "builder/common.h"
+#include "builder/numeric.h"
 
 namespace pgeon {
 
