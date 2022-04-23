@@ -1,6 +1,15 @@
 # Pgeon 🐦
 
-Fast data retrieval from a PostgreSQL database into Apache Arrow format.
+The fastest flight from [PostgreSQL](https://www.postgresql.org/) to [Apache Arrow](https://arrow.apache.org/).
+
+## Performance
+
+Kernel density estimates for 100 consecutive runs of a query fetching 7 columns (1 datetime, 2 ints, 4 reals)
+and returning around 4.5 million rows:
+
+![](benchmark.svg)
+
+The received `pyarrow` table can be further converted into a `pandas` dataframe in less than 25ms!
 
 ## Try it out
 

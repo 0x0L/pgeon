@@ -1,4 +1,5 @@
 import os
+import sys
 from distutils.core import setup
 
 import numpy as np
@@ -22,5 +23,8 @@ for ext in ext_modules:
 
     if os.name == "posix":
         ext.extra_compile_args.append("-std=gnu++17")
+
+    if sys.platform == "darwin":
+        ext.define_macros.append(("HAS_UNCAUGHT_EXCEPTIONS", "0"))
 
 setup(name="pgeon", ext_modules=ext_modules)
