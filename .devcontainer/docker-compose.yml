@@ -5,8 +5,9 @@ services:
     build:
       context: ..
       dockerfile: Dockerfile
+
     env_file:
-      - ../.env
+      - ./docker.env
 
     volumes:
       - ..:/workspace:cached
@@ -20,6 +21,12 @@ services:
     # Uncomment the next line to use a non-root user for all processes.
     # user: vscode
 
+    # Required for ptrace-based debuggers like C++, Go, and Rust
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
@@ -29,7 +36,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     env_file:
-      - ../.env
+      - ./docker.env
 
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)

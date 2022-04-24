@@ -4,6 +4,7 @@ channels:
 dependencies:
   # required
   # - python=3.10
+  - arrow-cpp>=7.0
   - pyarrow>=7.0
   - libpq
 
@@ -20,6 +21,8 @@ dependencies:
   - cpplint
 
   # testing
+  - gdb
+  - ipython
   - postgresql
   - asyncpg
   - pandas
@@ -27,3 +30,7 @@ dependencies:
   - pytest
   - pytest-cov
   - pytest-xdist
+
+  # benchmarks
+  - matplotlib-base
+  - seaborn

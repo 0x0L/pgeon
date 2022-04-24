@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14)
 message(STATUS "Using CMake ${CMAKE_VERSION}")
 
 # Main project configuration
@@ -18,10 +18,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(PostgreSQL REQUIRED)
-message(STATUS "Using PostgreSQL ${PostgreSQL_VERSION_STRING}")
+message(STATUS "Using PostgreSQL ${PostgreSQL_VERSION_STRING} ${PostgreSQL_LIBRARIES}")
 
 find_package(Arrow REQUIRED)
-message(STATUS "Using Arrow ${ARROW_VERSION}")
+message(STATUS "Using Arrow ${ARROW_FULL_SO_VERSION}")
 
 # find_package(OpenMP REQUIRED)
 # message(STATUS "Using OpenMP ${OpenMP_CXX_VERSION}")
@@ -29,27 +29,34 @@ message(STATUS "Using Arrow ${ARROW_VERSION}")
 # Main library
 add_library(pgeon SHARED)
 
-target_sources(pgeon PRIVATE
-    src/pgeon/builder/datetime.cc
-    src/pgeon/builder/geometric.cc
-    src/pgeon/builder/misc.cc
-    src/pgeon/builder/nested.cc
-    src/pgeon/builder/network.cc
-    src/pgeon/builder/numeric.cc
-    src/pgeon/builder/stringlike.cc
-    src/pgeon/builder/text_search.cc
-    src/pgeon/builder.cc
-    src/pgeon/table_builder.cc
-    src/pgeon/pg_interface.cc
-    src/pgeon/api.cc
-)
-
 target_include_directories(pgeon PRIVATE src)
-
 target_include_directories(pgeon PUBLIC include)
+target_sources(pgeon PRIVATE
+  src/pgeon/builder/datetime.cc
+  src/pgeon/builder/geometric.cc
+  src/pgeon/builder/misc.cc
+  src/pgeon/builder/nested.cc
+  src/pgeon/builder/network.cc
+  src/pgeon/builder/numeric.cc
+  src/pgeon/builder/stringlike.cc
+  src/pgeon/builder/text_search.cc
+  src/pgeon/builder.cc
+  src/pgeon/table_builder.cc
+  src/pgeon/pg_interface.cc
+  src/pgeon/api.cc
+)
 
 target_link_libraries(pgeon PUBLIC arrow_shared PostgreSQL::PostgreSQL)
 # target_link_libraries(pgeon PUBLIC OpenMP::OpenMP_CXX)
+
+# cli
+add_executable(pgeon-cli)
+set_target_properties(pgeon-cli PROPERTIES RUNTIME_OUTPUT_NAME pgeon)
+
+target_include_directories(pgeon-cli PUBLIC include)
+target_sources(pgeon-cli PRIVATE src/pgeon-cli/main.cc)
+
+target_link_libraries(pgeon-cli PUBLIC pgeon)
 
 # Python bindings
 if(BUILD_PYTHON_BINDINGS)

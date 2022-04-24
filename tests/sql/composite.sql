@@ -8,10 +8,7 @@ CREATE TYPE inventory_item AS (
     price numeric
 );
 
-CREATE TABLE on_hand (
-    item inventory_item,
-    count integer
-);
+CREATE TABLE on_hand (item inventory_item, count integer);
 
 INSERT INTO
     on_hand

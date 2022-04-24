@@ -12,35 +12,27 @@ This project is similar to [pg2arrow](https://github.com/heterodb/pg2arrow) and 
 Duration distributions from 100 consecutive runs of a query fetching 7 columns (1 timestamp, 2 ints, 4 reals)
 and returning around 4.5 million rows.
 
-![](benchmark.svg)
+![](benchmarks/minute_bars.svg)
 
-The received `pyarrow` table can be further converted into a `pandas` dataframe in less than 25ms!
+The received `pyarrow.Table` can be further converted into a `pandas.DataFrame` in less than 25ms!
 
 ## Try it out
 
-Open the project in VS code Dev container.
-
-After building the project, create a few sample tables with
+Open the project in VS code dev container and build it. In the terminal, create a few sample tables with
 
 ```shell
-cd /workspace/tests
-sh create_tables.sh
+sh tests/create_tables.sh
 ```
 
 To test it out
-```shell
-export LD_LIBRARY_PATH=/workspace/build
-cd /workspace/python/build/lib.linux-x86_64-cpython-310
-
-python <<EOF
+```python
 import os
 from pgeon import copy_query
 
-connstr = os.environ["POSTGRES_CONN"]
-req = "select * from numeric_table"
+db = os.environ["PGEON_TEST_DB"]
+tbl = copy_query(db, "select * from numeric_table")
 
-print(copy_query(connstr, req))
-EOF
+print(tbl)
 ```
 
 ## TODO
