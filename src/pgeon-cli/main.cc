@@ -15,10 +15,12 @@ int main(int argc, char** argv) {
   app.add_option("query", query, "the query");
 
   CLI11_PARSE(app, argc, argv);
-  std::cout << "dbname " << dbname << std::endl;
-  std::cout << "query " << query << std::endl;
+  // std::cout << "dbname " << dbname << std::endl;
+  // std::cout << "query " << query << std::endl;
 
   auto tbl = pgeon::CopyQuery(dbname.c_str(), query.c_str());
+
+  // std::cout << tbl->ToString() << std::endl;
   std::cout << tbl->num_rows() << " rows fetched" << std::endl;
 
   return 0;

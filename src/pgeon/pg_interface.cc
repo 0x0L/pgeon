@@ -19,7 +19,8 @@ ColumnVector ColumnTypesForQuery(PGconn* conn, const char* query) {
   PGresult* res = PQexec(conn, descr_query.c_str());
 
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    std::cout << PQresultErrorMessage(res) << std::endl;
+    std::cout << "error in ColumnTypesForQuery (query " << query
+              << "): " << PQresultErrorMessage(res) << std::endl;
   }
 
   int n = PQnfields(res);
@@ -56,7 +57,8 @@ WHERE
   auto res = PQexec(conn, query);
 
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    std::cout << PQresultErrorMessage(res) << std::endl;
+    std::cout << "error in RecordTypeInfo (Oid " << oid
+              << "): " << PQresultErrorMessage(res) << std::endl;
   }
 
   int nfields = PQntuples(res);
@@ -94,7 +96,14 @@ WHERE
   auto res = PQexec(conn, query);
 
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    std::cout << "error in copy command: " << PQresultErrorMessage(res) << std::endl;
+    std::cout << "error in MakeColumnBuilder (Oid " << oid
+              << "): " << PQresultErrorMessage(res) << std::endl;
+  }
+
+  if (PQntuples(res) == 0) {
+    // this happens with attmissingval (anyarrayrecv) in pg_attribute
+    PQclear(res);
+    return MakeBuilder({.typreceive = "void_recv"}, options);
   }
 
   std::string typreceive = PQgetvalue(res, 0, 0);
@@ -102,7 +111,7 @@ WHERE
   Oid typrelid = atooid(PQgetvalue(res, 0, 2));
   int typlen = atoi(PQgetvalue(res, 0, 3));
 
-  SqlTypeInfo sql_info = {.typreceive = typreceive, .typmod = mod, .typlen = typlen};
+  SqlTypeInfo sql_info{.typreceive = typreceive, .typmod = mod, .typlen = typlen};
 
   PQclear(res);
 
@@ -135,8 +144,9 @@ std::shared_ptr<TableBuilder> MakeTableBuilder(PGconn* conn, const char* query) 
 void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder) {
   auto copy_query = std::string("COPY (") + query + ") TO STDOUT (FORMAT binary)";
   auto res = PQexec(conn, copy_query.c_str());
-  if (PQresultStatus(res) != PGRES_COPY_OUT)
+  if (PQresultStatus(res) != PGRES_COPY_OUT) {
     std::cout << "error in copy command: " << PQresultErrorMessage(res) << std::endl;
+  }
   PQclear(res);
 
   TableBuilder* builder_ = builder.get();
@@ -160,8 +170,11 @@ void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> bu
   }
 
   res = PQgetResult(conn);
-  if (PQresultStatus(res) != PGRES_COMMAND_OK)
+  if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+    // not really an issue...
+    // pg_attribute gives "ERROR:  no binary output function available for type aclitem"
     std::cout << "copy command failed: " << PQresultErrorMessage(res) << std::endl;
+  }
   PQclear(res);
 }
 

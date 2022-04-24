@@ -51,7 +51,7 @@ print(tbl)
 
 * Output format for bit(..)
 
-* User options
+* Properly integrate UserOptions
 
   - control which strings (or columns) should be dict encoded. maybe as a default char varchar should be dict encoded and text should be large_utf8
 
