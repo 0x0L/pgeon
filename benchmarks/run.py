@@ -4,12 +4,11 @@ import time
 from io import BytesIO
 from pathlib import Path
 
-import pgeon
-
 import asyncpg
-import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
+import pgeon
 
 _PATH = Path(__file__).parent
 

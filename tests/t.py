@@ -121,7 +121,7 @@ query = "SELECT nummultirange(numrange(1.0, 14.0), numrange(20.0, 25.0))"
 # TODO domain types
 
 # Object identifier types
-query = "SELECT * FROM pg_attribute WHERE attrelid = 'on_hand'::regclass"  # TODO segfault
+query = "SELECT * FROM pg_attribute WHERE attrelid = 'on_hand'::regclass"
 
 # TODO `pg_lsn` type
 query = "SELECT pg_current_snapshot()"

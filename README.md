@@ -3,7 +3,7 @@
 The fastest flight from [PostgreSQL](https://www.postgresql.org/) to [Apache Arrow](https://arrow.apache.org/).
 
 `pgeon` provides a C++ library and (very) simple python bindings. Almost all
-PostgreSQL native types are supported (see [below](#notes))
+PostgreSQL native types are supported (see [below](#notes)).
 
 This project is similar to [pg2arrow](https://github.com/heterodb/pg2arrow) and is heavily inspired by it. The main differences are the use of `COPY` instead of `FETCH` and that our implementation uses the Arrow C++ API.
 
@@ -67,4 +67,8 @@ print(tbl)
 
   * SQL arrays are mapped to `pyarrow.list_(...)`. Only 1D arrays are fully supported. Higher dimensional arrays will be flattened.
 
-  * PostgreSQL `Range` types are not supported.
+  * BitString types output format is not really helpful
+
+  * tsvector types with letter weights are not supported
+
+  * PostgreSQL range and domain types are not supported.
