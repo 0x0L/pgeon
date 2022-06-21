@@ -18,6 +18,22 @@ The received `pyarrow.Table` can be further converted into a `pandas.DataFrame` 
 
 ## Try it out
 
+### Developer Notes
+
+In order to create a sensible environment you can do `conda env create -f environment.yml` or open the project in the dev container with VSCode.
+
+### Building the C++ library and programs
+
+- `conda activate pgeon-dev`
+- `mkdir build && cd build`
+- `cmake -GNinja ..`
+
+### Building the Python wrapper
+
+In order to install the Python wrapper you can use standard Python tooling for packages, e.g.
+
+- `pip install .`
+
 Open the project in VS code dev container and build it. In the terminal, create a few sample tables with
 
 ```shell
@@ -25,6 +41,7 @@ sh tests/create_tables.sh
 ```
 
 To test it out
+
 ```python
 import os
 from pgeon import copy_query
@@ -37,27 +54,27 @@ print(tbl)
 
 ## TODO
 
-* Tests & benchmarks
+- Tests & benchmarks
 
-* Error handling: replace the hideous and error prone `unpack(buf); buf += ...` with a Buffer struct; that would allow to return `Status` instead of the read len
+- Error handling: replace the hideous and error prone `unpack(buf); buf += ...` with a Buffer struct; that would allow to return `Status` instead of the read len
 
-* Multi platform build / package / deploy
+- Multi platform build / package / deploy
 
-* Batchbuilder simple `void (*callback)(std::shared_ptr<arrow::RecordBatch>)` interface
+- Batchbuilder simple `void (*callback)(std::shared_ptr<arrow::RecordBatch>)` interface
 
-* Standalone Flight server
+- Standalone Flight server
 
-* Is there any issue with `COPY` ? If so, explore use of `FETCH` again
+- Is there any issue with `COPY` ? If so, explore use of `FETCH` again
 
-* Output format for bit(..)
+- Output format for bit(..)
 
-* Properly integrate UserOptions
+- Properly integrate UserOptions
 
   - control which strings (or columns) should be dict encoded. maybe as a default char varchar should be dict encoded and text should be large_utf8
 
   - review of bytes vs string and encoding
 
-* python bindings
+- python bindings
 
   - propagate user_options
 
@@ -65,10 +82,10 @@ print(tbl)
 
 ## Notes
 
-  * SQL arrays are mapped to `pyarrow.list_(...)`. Only 1D arrays are fully supported. Higher dimensional arrays will be flattened.
+- SQL arrays are mapped to `pyarrow.list_(...)`. Only 1D arrays are fully supported. Higher dimensional arrays will be flattened.
 
-  * BitString types output format is not really helpful
+- BitString types output format is not really helpful
 
-  * tsvector types with letter weights are not supported
+- tsvector types with letter weights are not supported
 
-  * PostgreSQL range and domain types are not supported.
+- PostgreSQL range and domain types are not supported.
