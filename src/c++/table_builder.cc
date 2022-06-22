@@ -1,7 +1,7 @@
 // Copyright 2022 nullptr
 
-#include "pgeon/table_builder.h"
-#include "pgeon/util/hton.h"
+#include "table_builder.h"
+#include "util/hton.h"
 
 namespace pgeon {
 

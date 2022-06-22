@@ -11,9 +11,3 @@ dependencies:
   # The compiler packages are meta-packages and install the correct compiler (activation) packages on the respective platforms.
   - c-compiler
   - cxx-compiler
-
-  # Dev
-  - git
-  - cmake
-  - ninja
-  - postgresql

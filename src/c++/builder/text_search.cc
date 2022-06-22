@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "pgeon/builder/common.h"
-#include "pgeon/builder/text_search.h"
+#include "builder/common.h"
+#include "builder/text_search.h"
 
 namespace pgeon {
 

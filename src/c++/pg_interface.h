@@ -6,7 +6,7 @@
 
 #include <memory>
 
-#include "pgeon/table_builder.h"
+#include "table_builder.h"
 
 namespace pgeon {
 

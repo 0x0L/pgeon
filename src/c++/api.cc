@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-#include "pgeon/pg_interface.h"
+#include "pg_interface.h"
 
 namespace pgeon {
 
