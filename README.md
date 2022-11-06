@@ -16,17 +16,8 @@ and returning around 4.5 million rows.
 
 The received `pyarrow.Table` can be further converted into a `pandas.DataFrame` in less than 25ms!
 
+
 ## Try it out
-
-### Developer Notes
-
-In order to create a sensible environment you can do `conda env create -f environment.yml` or open the project in the dev container with VSCode.
-
-### Building the C++ library and programs
-
-- `conda activate pgeon-dev`
-- `mkdir build && cd build`
-- `cmake -GNinja ..`
 
 ### Building the Python wrapper
 
@@ -34,13 +25,20 @@ In order to install the Python wrapper you can use standard Python tooling for p
 
 - `pip install .`
 
-Open the project in VS code dev container and build it. In the terminal, create a few sample tables with
+In order to create a sensible environment you can do `conda env create -f environment.yml` or open the project in the dev container with VSCode. Also to run tests you'll need the `dev` extra (`pip install .[dev]`)
 
-```shell
-sh tests/create_tables.sh
-```
 
-To test it out
+### Building the C++ library and programs
+
+- `conda activate pgeon-dev`
+- `mkdir build && cd build`
+- `cmake .. && cmake --build`
+
+### Tests
+
+You can run the test suite using `pytest`. The test suite will populate the DB with some test data and run a set of queries on it. 
+
+Or you can try it manually:
 
 ```python
 import os
