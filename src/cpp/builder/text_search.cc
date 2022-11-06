@@ -38,10 +38,10 @@ size_t TsVectorBuilder::Append(const char* buf) {
     int16_t flen = 0;
     while (*(buf + flen) != '\0') flen++;
 
-    key_builder_->Append(buf, flen);
+    status = key_builder_->Append(buf, flen);
     buf += flen + 1;
 
-    item_builder_->Append();
+    status = item_builder_->Append();
 
     npos = unpack_int16(buf);
     buf += 2;
@@ -50,7 +50,7 @@ size_t TsVectorBuilder::Append(const char* buf) {
       int16_t pos = unpack_int16(buf);
       buf += 2;
 
-      value_builder_->Append(pos);
+      status = value_builder_->Append(pos);
     }
   }
 
@@ -105,7 +105,7 @@ size_t TsQueryBuilder::Append(const char* buf) {
 
   int16_t npos;
   for (size_t i = 0; i < size; i++) {
-    value_builder_->Append();
+    status = value_builder_->Append();
 
     int8_t type = *buf;
     buf += 1;
@@ -119,12 +119,12 @@ size_t TsQueryBuilder::Append(const char* buf) {
         int16_t flen = 0;
         while (*(buf + flen) != '\0') flen++;
 
-        type_builder_->Append(type);
-        weight_builder_->Append(weight);
-        prefix_builder_->Append(prefix);
-        operand_builder_->Append(buf, flen);  // TODO(xav)
-        oper_builder_->AppendNull();
-        distance_builder_->AppendNull();
+        status = type_builder_->Append(type);
+        status = weight_builder_->Append(weight);
+        status = prefix_builder_->Append(prefix);
+        status = operand_builder_->Append(buf, flen);  // TODO(xav)
+        status = oper_builder_->AppendNull();
+        status = distance_builder_->AppendNull();
         buf += flen + 1;
       } break;
 
@@ -132,29 +132,29 @@ size_t TsQueryBuilder::Append(const char* buf) {
         int8_t oper = *buf;
         buf += 1;
 
-        type_builder_->Append(type);
-        weight_builder_->AppendNull();
-        prefix_builder_->AppendNull();
-        operand_builder_->AppendNull();
-        oper_builder_->Append(oper);
+        status = type_builder_->Append(type);
+        status = weight_builder_->AppendNull();
+        status = prefix_builder_->AppendNull();
+        status = operand_builder_->AppendNull();
+        status = oper_builder_->Append(oper);
 
         if (oper == OP_PHRASE) {
           int16_t distance = unpack_int16(buf);
           buf += 2;
 
-          distance_builder_->Append(distance);
+          status = distance_builder_->Append(distance);
         } else {
-          distance_builder_->AppendNull();
+          status = distance_builder_->AppendNull();
         }
       } break;
 
       default: {
-        type_builder_->Append(type);
-        weight_builder_->AppendNull();
-        prefix_builder_->AppendNull();
-        operand_builder_->AppendNull();
-        oper_builder_->AppendNull();
-        distance_builder_->AppendNull();
+        status = type_builder_->Append(type);
+        status = weight_builder_->AppendNull();
+        status = prefix_builder_->AppendNull();
+        status = operand_builder_->AppendNull();
+        status = oper_builder_->AppendNull();
+        status = distance_builder_->AppendNull();
       } break;
     }
   }

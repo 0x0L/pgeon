@@ -86,17 +86,17 @@ size_t HstoreBuilder::Append(const char* buf) {
     flen = unpack_int32(buf);
     buf += 4;
 
-    key_builder_->Append(buf, flen);
+    status = key_builder_->Append(buf, flen);
     buf += flen;
 
     flen = unpack_int32(buf);
     buf += 4;
 
     if (flen > -1) {
-      item_builder_->Append(buf, flen);
+      status = item_builder_->Append(buf, flen);
       buf += flen;
     } else {
-      item_builder_->AppendNull();
+      status = item_builder_->AppendNull();
     }
   }
 

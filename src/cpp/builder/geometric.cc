@@ -108,24 +108,24 @@ size_t PathBuilder::Append(const char* buf) {
 
   auto status = ptr_->Append();
 
-  is_closed_builder_->Append(*buf != 0);
+  status = is_closed_builder_->Append(*buf != 0);
   buf += 1;
 
   int32_t npts = unpack_int32(buf);
   buf += 4;
 
   // TODO(xav) could it be null ?
-  point_list_builder_->Append();
+  status = point_list_builder_->Append();
 
   for (size_t i = 0; i < npts; i++) {
-    point_builder_->Append();
+    status = point_builder_->Append();
 
     double x = unpack_double(buf);
     double y = unpack_double(buf + 8);
     buf += 16;
 
-    x_builder_->Append(x);
-    y_builder_->Append(y);
+    status = x_builder_->Append(x);
+    status = y_builder_->Append(y);
   }
 
   return 4 + len;
@@ -161,14 +161,14 @@ size_t PolygonBuilder::Append(const char* buf) {
   auto status = ptr_->Append();
 
   for (size_t i = 0; i < npts; i++) {
-    point_builder_->Append();
+    status = point_builder_->Append();
 
     double x = unpack_double(buf);
     double y = unpack_double(buf + 8);
     buf += 16;
 
-    x_builder_->Append(x);
-    y_builder_->Append(y);
+    status = x_builder_->Append(x);
+    status = y_builder_->Append(y);
   }
 
   return 4 + len;
