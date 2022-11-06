@@ -3,7 +3,6 @@
 #pragma once
 
 #include <arrow/api.h>
-
 #include <memory>
 
 namespace pgeon {

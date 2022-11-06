@@ -1,3 +1,10 @@
+if(WIN32)
+    # Visual Studio does not support __int128
+    configure_file(builder/win.h builder/platform.h)
+else()
+    configure_file(builder/unix.h builder/platform.h)
+endif()
+
 if (SKBUILD)
     add_library(pgeon OBJECT)
     set_property(TARGET pgeon PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -23,6 +30,7 @@ target_sources(pgeon PRIVATE
 
 target_include_directories(pgeon PUBLIC include)
 target_include_directories(pgeon PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(pgeon PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries(pgeon PUBLIC arrow_shared PostgreSQL::PostgreSQL)
 
