@@ -9,7 +9,8 @@
 
 namespace pgeon {
 
-std::shared_ptr<arrow::Table> CopyQuery(const char* conninfo, const char* query) {
+std::shared_ptr<arrow::Table> CopyQuery(const char* conninfo, const char* query,
+                                        const UserOptions& options) {
   auto conn = PQconnectdb(conninfo);
   if (PQstatus(conn) != CONNECTION_OK)
     std::cout << "failed on PostgreSQL connection: " << PQerrorMessage(conn) << std::endl;
@@ -20,7 +21,7 @@ std::shared_ptr<arrow::Table> CopyQuery(const char* conninfo, const char* query)
               << std::endl;
   PQclear(res);
 
-  auto builder = MakeTableBuilder(conn, query);
+  auto builder = MakeTableBuilder(conn, query, options);
   CopyQuery(conn, query, builder);
   auto table = builder->Flush();
 

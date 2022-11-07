@@ -1,12 +1,11 @@
 [build-system]
 requires = [
-    "setuptools>=45", 
-    "setuptools_scm[toml]>=6.2", 
-    "wheel",
-    "scikit-build @ git+https://github.com/rdbisme/scikit-build.git@parse-setup-cfg",
-    "cmake", 
-    "pybind11",
-    "ninja"
+  "setuptools>=45",
+  "setuptools_scm[toml]>=6.2",
+  "scikit-build",
+  "pybind11",
+  "cmake",
+  "ninja"
 ]
 build-backend = "setuptools.build_meta"
 

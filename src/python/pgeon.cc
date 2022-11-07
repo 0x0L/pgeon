@@ -10,7 +10,7 @@ PYBIND11_MODULE(_pgeon, m) {
   arrow::py::import_pyarrow();
 
   m.doc() =
-      "The fastest flight from PostgreSQL to Apache Arrow";  // optional module docstring
+      "The fastest flight from PostgreSQL to Apache Arrow";
 
   m.def("copy_query", &copy_query, "Run a COPY query against the db");
 }

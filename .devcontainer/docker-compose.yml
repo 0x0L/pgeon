@@ -26,7 +26,6 @@ services:
       - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
-
     # Use "forwardPorts" in **devcontainer.json** to forward an app port locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 
@@ -37,7 +36,6 @@ services:
       - postgres-data:/var/lib/postgresql/data
     env_file:
       - ./docker.env
-
     # Add "forwardPorts": ["5432"] to **devcontainer.json** to forward PostgreSQL locally.
     # (Adding the "ports" property to this file will not forward from a Codespace.)
 

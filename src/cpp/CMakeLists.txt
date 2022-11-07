@@ -20,7 +20,6 @@ target_sources(pgeon PRIVATE
     api.cc
 )
 
-
 target_include_directories(pgeon PUBLIC include)
 target_include_directories(pgeon PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

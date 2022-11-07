@@ -42,7 +42,7 @@ size_t InetBuilder::Append(const char* buf) {
   status = is_cidr_builder_->Append(*buf != 0);
   buf += 1;
 
-  uint8_t nb = *buf;
+  int8_t nb = *buf;
   buf += 1;
 
   if (nb > -1) status = ipaddr_builder_->Append(buf, nb);

@@ -15,7 +15,7 @@ project(
 cmake_policy(SET CMP0054 NEW)
 
 # Compiler settings
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(PostgreSQL REQUIRED)
@@ -24,9 +24,7 @@ message(STATUS "Using PostgreSQL ${PostgreSQL_VERSION_STRING} ${PostgreSQL_LIBRA
 find_package(Arrow REQUIRED)
 message(STATUS "Using Arrow ${ARROW_FULL_SO_VERSION}")
 
-
-
-add_subdirectory(src/c++)
+add_subdirectory(src/cpp)
 
 # To build python wrapper, use pip or build
 if (SKBUILD)

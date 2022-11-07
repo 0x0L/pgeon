@@ -5,6 +5,10 @@
 #include "builder/common.h"
 #include "builder/numeric.h"
 
+#ifdef _MSC_VER
+typedef int64_t __int128_t;
+#endif
+
 namespace pgeon {
 
 #define NUMERIC_SIGN_MASK 0xC000
@@ -121,7 +125,7 @@ size_t MonetaryBuilder::Append(const char* buf) {
   __int128_t value = unpack_int64(buf);
   buf += 8;
 
-  ptr_->Append(reinterpret_cast<uint8_t*>(&value));
+  auto status = ptr_->Append(reinterpret_cast<uint8_t*>(&value));
   return 4 + len;
 }
 

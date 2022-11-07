@@ -46,8 +46,8 @@ size_t TidBuilder::Append(const char* buf) {
   int32_t offset = unpack_int16(buf + 4);
   buf += 6;
 
-  block_builder_->Append(block);
-  offset_builder_->Append(offset);
+  status = block_builder_->Append(block);
+  status = offset_builder_->Append(offset);
 
   return 4 + len;
 }
@@ -85,13 +85,13 @@ size_t PgSnapshotBuilder::Append(const char* buf) {
   int64_t xmax = unpack_int64(buf + 8);
   buf += 16;
 
-  xmin_builder_->Append(xmin);
-  xmax_builder_->Append(xmax);
+  status = xmin_builder_->Append(xmin);
+  status = xmax_builder_->Append(xmax);
 
   for (size_t i = 0; i < nxip; i++) {
     int64_t xip = unpack_int64(buf);
     buf += 8;
-    value_builder_->Append(xip);
+    status = value_builder_->Append(xip);
   }
 
   return 4 + len;

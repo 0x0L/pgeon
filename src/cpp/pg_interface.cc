@@ -77,9 +77,8 @@ WHERE
   return fields;
 }
 
-std::shared_ptr<ArrayBuilder> MakeColumnBuilder(PGconn* conn, Oid oid, int mod) {
-  const UserOptions& options = UserOptions::Defaults();
-
+std::shared_ptr<ArrayBuilder> MakeColumnBuilder(PGconn* conn, Oid oid, int mod,
+                                                const UserOptions& options) {
   char query[4096];
   snprintf(query, sizeof(query), R"(
 SELECT
@@ -117,13 +116,13 @@ WHERE
 
   if (typreceive == "anyarray_recv" || typreceive == "anycompatiblearray_recv" ||
       typreceive == "array_recv") {
-    sql_info.value_builder = MakeColumnBuilder(conn, typelem, mod);
+    sql_info.value_builder = MakeColumnBuilder(conn, typelem, mod, options);
   } else if (typreceive == "record_recv") {
     auto fields_info = RecordTypeInfo(conn, typrelid);
     FieldVector fields;
     for (size_t i = 0; i < fields_info.size(); i++) {
       auto [name, oid, mod] = fields_info[i];
-      fields.push_back({name, MakeColumnBuilder(conn, oid, mod)});
+      fields.push_back({name, MakeColumnBuilder(conn, oid, mod, options)});
     }
     sql_info.field_builders = fields;
   }
@@ -131,11 +130,12 @@ WHERE
   return MakeBuilder(sql_info, options);
 }
 
-std::shared_ptr<TableBuilder> MakeTableBuilder(PGconn* conn, const char* query) {
+std::shared_ptr<TableBuilder> MakeTableBuilder(PGconn* conn, const char* query,
+                                               const UserOptions& options) {
   auto columns = ColumnTypesForQuery(conn, query);
   FieldVector fields;
   for (auto& [name, oid, mod] : columns) {
-    auto builder = MakeColumnBuilder(conn, oid, mod);
+    auto builder = MakeColumnBuilder(conn, oid, mod, options);
     fields.push_back({name, builder});
   }
   return std::make_shared<TableBuilder>(fields);
