@@ -5,8 +5,24 @@ requires = [
   "scikit-build",
   "pybind11",
   "cmake",
-  "ninja"
+  "ninja",
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pgeon"
+description = "PostgreSQL to Apache Arrow"
+readme = "README.md"
+requires-python = ">=3.7"
+keywords = ["arrow", "postgresql"]
+license = { text = "MIT License" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Framework :: Apache Arrow",
+  "Topic :: Database",
+]
+dependencies = ["pyarrow"]
+dynamic = ["version"]
 
 [tool.setuptools_scm]

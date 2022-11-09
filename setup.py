@@ -11,7 +11,7 @@ cmake_args = [
 
 # For some reason skbuild seems to be confused about this
 if sys.platform == "darwin":
-    default_target = skbuild_plat_name().split('-')[1]
+    default_target = skbuild_plat_name().split("-")[1]
     target = os.getenv("MACOSX_DEPLOYMENT_TARGET", default_target)
     cmake_args.append(f"-DCMAKE_OSX_DEPLOYMENT_TARGET={target}")
 
@@ -19,5 +19,4 @@ setup(
     cmake_args=cmake_args,
     packages=["pgeon"],
     package_dir={"pgeon": "src/python"},
-    # TODO: install_requires
 )
