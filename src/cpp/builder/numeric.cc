@@ -58,13 +58,13 @@ size_t NumericBuilder::Append(const char* buf) {
 
   auto rawdata = reinterpret_cast<const _NumericHelper*>(buf);
 
-  int ndigits = ntoh16(rawdata->ndigits);
-  int weight = ntoh16(rawdata->weight);
-  int sign = ntoh16(rawdata->sign);
-  int scale = scale_;  // ntoh16(rawdata->dscale);
+  int16_t ndigits = ntoh16(rawdata->ndigits);
+  int16_t weight = ntoh16(rawdata->weight);
+  int16_t sign = ntoh16(rawdata->sign);
+  int16_t scale = scale_;  // ntoh16(rawdata->dscale);
 
   __int128_t value = 0;
-  int d, dig;
+  int16_t d, dig;
 
   if ((sign & NUMERIC_SIGN_MASK) == NUMERIC_NAN) {
     auto status = ptr_->AppendNull();
