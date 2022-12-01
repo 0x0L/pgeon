@@ -30,3 +30,7 @@ dependencies = ["pyarrow"]
 tests = ["psycopg[binary]", "pytest", "pytest-benchmark[histogram]"]
 
 [tool.setuptools_scm]
+
+[tool.cibuildwheel]
+build = "cp39-* cp310-* cp311-*"
+before-build = "bash scripts/prepare-build.sh" 
