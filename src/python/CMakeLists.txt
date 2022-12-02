@@ -1,5 +1,5 @@
 find_package(pybind11 REQUIRED)
-find_package(ArrowPython REQUIRED HINTS ${Arrow_DIR})
+find_package(ArrowPython REQUIRED)
 
 pybind11_add_module(py_pgeon MODULE pgeon.cc)
 set_target_properties(py_pgeon PROPERTIES OUTPUT_NAME "_pgeon")

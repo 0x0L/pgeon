@@ -6,6 +6,7 @@ requires = [
   "pybind11",
   "cmake",
   "ninja",
+  "pyarrow"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -33,4 +34,9 @@ tests = ["psycopg[binary]", "pytest", "pytest-benchmark[histogram]"]
 
 [tool.cibuildwheel]
 build = "cp39-* cp310-* cp311-*"
-before-build = "bash scripts/prepare-build.sh" 
+skip = "*_i686 *-musllinux_*"
+build-verbosity = 2
+
+[tool.cibuildwheel.linux]
+before-build = "bash scripts/linux/prepare-build.sh" 
+repair-wheel-command = "bash scripts/linux/repair-wheel.sh {dest_dir} {wheel}"

@@ -6,3 +6,5 @@ yum install -y --enablerepo=epel arrow-dataset-devel # For Apache Arrow Dataset 
 yum install -y --enablerepo=epel arrow-dataset-glib-devel # For Apache Arrow Dataset GLib (C)
 yum install -y --enablerepo=epel parquet-devel # For Apache Parquet C++
 yum install -y --enablerepo=epel parquet-glib-devel # For Apache Parquet GLib (C)
+
+python3 -m pip install pyarrow
