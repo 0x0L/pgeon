@@ -9,17 +9,17 @@ find_package(ArrowPython QUIET CONFIG)
 
 if (NOT ArrowPython_FOUND)
     message(WARNING "ArrowPython not found using config file...")
+    message(STATUS "ArrowPython_DIR: ${ArrowPython_DIR}")
     # Restore
     set(ArrowPython_DIR ${TEMP_ArrowPython_DIR})
 
     # Standard stuff did not work, so we try to locate ArrowPython in include paths
     find_path(ArrowPython_INCLUDE_DIR 
         NAMES
-            arrow/api.h
+            arrow/python/pyarrow.h
         HINTS 
             ${ArrowPython_DIR}
-            ${ArrowPython_DIR}/include
-        PATH_SUFFIXES ArrowPython arrow
+        PATH_SUFFIXES include
     )
 
     find_library(ArrowPython_LIBRARY
@@ -28,8 +28,7 @@ if (NOT ArrowPython_FOUND)
             libarrow_python
         HINTS 
             ${ArrowPython_DIR}
-            ${ArrowPython_DIR}/include
-        PATH_SUFFIXES ArrowPython arrow
+        PATH_SUFFIXES include
     )
 
 endif (NOT ArrowPython_FOUND)
