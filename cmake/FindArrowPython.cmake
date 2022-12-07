@@ -1,16 +1,5 @@
 message(STATUS "Searching for ArrowPython...")
 
-set(ArrowPython_CHECK_PATHS 
-    "/usr/local/include"
-    "/usr/local/homebrew/include" # Mac OS X
-    "/opt/local/var/macports/software" # Mac OS X.
-    "/opt/local/include"
-    "/usr/include"
-    "$ENV{CPLUS_INCLUDE_PATH}"
-    "$ENV{CPATH}"
-    "${CMAKE_SOURCE_DIR}/thirdparty/eigen"
-    )
-
 # First try to use the standard find_package that should be able to find the
 # .cmake configuration files if installed in standard directories. 
 
@@ -19,6 +8,7 @@ set(TEMP_ArrowPython_DIR ${ArrowPython_DIR})
 find_package(ArrowPython QUIET CONFIG)
 
 if (NOT ArrowPython_FOUND)
+    message(WARNING "ArrowPython not found using config file...")
     # Restore
     set(ArrowPython_DIR ${TEMP_ArrowPython_DIR})
 
@@ -54,6 +44,7 @@ find_package_handle_standard_args(ArrowPython
 )
 
 if(ArrowPython_FOUND AND NOT TARGET arrow_python_shared)
+    message(STATUS "ArrowPython lib: ${ArrowPython_LIBRARY}")
     add_library(arrow_python_shared SHARED IMPORTED)
     set_target_properties(arrow_python_shared PROPERTIES
         IMPORTED_LOCATION "${ArrowPython_LIBRARY}"

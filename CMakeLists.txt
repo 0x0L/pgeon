@@ -3,6 +3,7 @@ message(STATUS "Using CMake ${CMAKE_VERSION}")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+
 # Main project configuration
 project(
     pgeon
