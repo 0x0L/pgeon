@@ -34,8 +34,8 @@ if (NOT ArrowPython_FOUND)
 
     find_library(ArrowPython_LIBRARY
         NAMES
-            arrow_python.so
-            libarrow_python.so
+            arrow_python
+            libarrow_python
         HINTS 
             ${ArrowPython_DIR}
             ${ArrowPython_DIR}/include
