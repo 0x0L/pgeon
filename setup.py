@@ -14,7 +14,8 @@ cmake_args = [
 ]
 
 if sys.platform == "darwin":
-    os.environ["MACOSX_DEPLOYMENT_TARGET"] = "10.13"
+    os.environ["MACOX_DEPLOYMENT_TARGET"] = "10.13"
+    cmake_args.append("-DCMAKE_OSX_DEPLOYMENT_TARGET=10.13")
 
 setup(
     cmake_args=cmake_args,
