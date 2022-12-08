@@ -44,6 +44,3 @@ repair-wheel-command = "bash scripts/linux/repair-wheel.sh {dest_dir} {wheel}"
 [tool.cibuildwheel.macos]
 before-build = "bash scripts/macos/prepare-build.sh" 
 repair-wheel-command = "bash scripts/macos/repair-wheel.sh {dest_dir} {wheel} {delocate_archs}"
-
-[tool.cibuildwheel.macos.environment]
-MACOSX_DEPLOYMENT_TARGET = "10.13"

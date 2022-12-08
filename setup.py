@@ -13,6 +13,9 @@ cmake_args = [
     f"-DArrowPython_DIR={py_arrow_dirs}"
 ]
 
+if sys.platform == "darwin":
+    os.environ["MACOSX_DEPLOYMENT_TARGET"] = "10.13"
+
 setup(
     cmake_args=cmake_args,
     packages=["pgeon"],
