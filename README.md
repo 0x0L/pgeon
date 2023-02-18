@@ -10,6 +10,35 @@ PostgreSQL native types are supported (see [below](#notes)).
 
 This project is similar to [pg2arrow](https://github.com/heterodb/pg2arrow) and is heavily inspired by it. The main differences are the use of `COPY` instead of `FETCH` and that our implementation uses the Arrow C++ API.
 
+## Install notes
+
+To create a sensible environment you can do `conda env create -f environment.yml` or open the project in the dev container with VSCode.
+
+```shell
+git clone https://github.com/0x0L/pgeon.git
+cd pgeon
+pip install .
+```
+
+### [optional] Building the c++ library
+
+```shell
+mkdir build
+cd build
+cmake -GNinja ..
+ninja
+```
+
+## Usage
+
+```python
+from pgeon import copy_query
+db = "postgresql://postgres@localhost:5432/postgres"
+db = "postgresql://localhost:5432/postgres"
+tbl = copy_query(db, "SELECT TIMESTAMP '2001-01-01 14:00:00'")
+print(tbl)
+```
+
 ## Performance
 
 Duration distributions from 100 consecutive runs of a query fetching 7 columns (1 timestamp, 2 ints, 4 reals)
@@ -46,42 +75,11 @@ sh tests/create_tables.sh
 To test it out
 
 ```python
-import os
 from pgeon import copy_query
-
-db = os.environ["PGEON_TEST_DB"]
+db = "postgresql://postgres@localhost:5432/postgres"
 tbl = copy_query(db, "select * from numeric_table")
-
 print(tbl)
 ```
-
-## TODO
-
-- Tests & benchmarks
-
-- Error handling: replace the hideous and error prone `unpack(buf); buf += ...` with a Buffer struct; that would allow to return `Status` instead of the read len
-
-- Multi platform build / package / deploy
-
-- Batchbuilder simple `void (*callback)(std::shared_ptr<arrow::RecordBatch>)` interface
-
-- Standalone Flight server
-
-- Is there any issue with `COPY` ? If so, explore use of `FETCH` again
-
-- Output format for bit(..)
-
-- Properly integrate UserOptions
-
-  - control which strings (or columns) should be dict encoded. maybe as a default char varchar should be dict encoded and text should be large_utf8
-
-  - review of bytes vs string and encoding
-
-- python bindings
-
-  - propagate user_options
-
-  - proper package / docstring / etc...
 
 ## Notes
 

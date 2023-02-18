@@ -12,3 +12,13 @@ VALUES
     ('Moe', 'happy'),
     ('Larry', 'sad'),
     ('Curly', 'ok');
+
+SELECT
+    *
+FROM
+    (
+        VALUES
+            ('Moe', 'happy'),
+            ('Larry', 'sad'),
+            ('Curly', 'ok')
+    ) AS foo;

@@ -19,3 +19,20 @@ VALUES
         '{20000, 25000, 25000, 25000}',
         '{{"breakfast", "consulting"}, {"meeting", "lunch"}}'
     );
+
+-- SELECT
+--     *
+-- FROM
+--     (
+--         VALUES
+--             (
+--                 'Bill',
+--                 '{10000, 10000, 10000, 10000}',
+--                 '{{"meeting", "lunch"}, {"training", "presentation"}}'
+--             ),
+--             (
+--                 'Carol',
+--                 '{20000, 25000, 25000, 25000}',
+--                 '{{"breakfast", "consulting"}, {"meeting", "lunch"}}'
+--             )
+--     ) AS foo;

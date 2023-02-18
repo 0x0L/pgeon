@@ -4,17 +4,21 @@
   "service": "app",
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
-  "settings": {
-    "cpplint.cpplintPath": "/opt/conda/bin/cpplint",
-    "cpplint.lineLength": 90
-  },
-  "extensions": [
-    "ms-vscode.cmake-tools",
-    "ms-vscode.cpptools",
-    "mine.cpplint",
-    "EditorConfig.EditorConfig",
-    "adpyke.vscode-sql-formatter",
-  ],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "cpplint.cpplintPath": "/opt/conda/bin/cpplint",
+        "cpplint.lineLength": 90
+      },
+      "extensions": [
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",
+        "mine.cpplint",
+        "EditorConfig.EditorConfig",
+        "adpyke.vscode-sql-formatter",
+      ],
+    }
+  }
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [5432],
   // Use 'postCreateCommand' to run commands after the container is created.
