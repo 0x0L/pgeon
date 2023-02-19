@@ -3,12 +3,14 @@
 [![Build](https://github.com/0x0L/pgeon/actions/workflows/build.yml/badge.svg)](https://github.com/0x0L/pgeon/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/0x0L/pgeon/blob/main/LICENSE)
 
-The fastest flight from [PostgreSQL](https://www.postgresql.org/) to [Apache Arrow](https://arrow.apache.org/).
+[Apache Arrow](https://arrow.apache.org/) [PostgreSQL](https://www.postgresql.org/) connector
 
 `pgeon` provides a C++ library and (very) simple python bindings. Almost all
 PostgreSQL native types are supported (see [below](#notes)).
 
 This project is similar to [pg2arrow](https://github.com/heterodb/pg2arrow) and is heavily inspired by it. The main differences are the use of `COPY` instead of `FETCH` and that our implementation uses the Arrow C++ API.
+
+The goal of `pgeon` is to provide fast bulk data download from a PostgreSQL database into Apache Arrow tables. If you're looking to upload data, you might want to have a look at [Arrow ADBC](https://github.com/apache/arrow-adbc).
 
 ## Usage
 
@@ -21,7 +23,7 @@ tbl = copy_query(db, query)
 
 The actual query performed is `COPY ({query}) TO STDOUT (FORMAT binary)`, see [this page](https://www.postgresql.org/docs/current/sql-copy.html) for more information.
 
-## Install notes
+## Installation
 
 `pgeon` requires [libpq](https://www.postgresql.org/docs/current/libpq.html) to be available on your system. You'll also need a C++ compiler.
 
@@ -39,7 +41,7 @@ See [this issue](https://github.com/0x0L/pgeon/issues/8) for installation in a n
 
 ### [optional] C++ library and tools
 
-This requires [cmake](https://cmake.org/) and [ninja](https://ninja-build.org/)
+This requires [cmake](https://cmake.org/) and [ninja](https://ninja-build.org/). In addition you'll need to install `libpq` and the Arrow C++ libraries (e.g. `arrow-cpp` in conda)
 
 ```shell
 mkdir build
@@ -56,7 +58,7 @@ Elapsed time distributions of a query fetching 7 columns (1 timestamp, 2 ints, 4
 
 ## Notes
 
-- Queries using `ROW` (e.g. `SELECT ROW('a', 1)`) do not work
+- Queries using `ROW` (e.g. `SELECT ROW('a', 1)`) do not work (anonymous structs)
 
 - SQL arrays are mapped to `pyarrow.list_(...)`. Only 1D arrays are fully supported. Higher dimensional arrays will be flattened.
 
