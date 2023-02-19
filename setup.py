@@ -46,5 +46,5 @@ setup(
     ext_modules=cythonize(extensions),
     libraries=ext_libraries,
     package_dir={"": "python"},
-    include_package_data=False
+    include_package_data=False,
 )

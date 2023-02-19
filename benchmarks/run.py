@@ -7,21 +7,22 @@ import pgeon
 import psycopg
 
 import pandas as pd
-import pyarrow as pa
-import pyarrow.csv
+import pyarrow.csv as csv
 import seaborn as sns
+
 
 def _df_from_buffer(buffer):
     buffer.seek(0)
-    read_options = pa.csv.ReadOptions(autogenerate_column_names=True)
-    df = pa.csv.read_csv(buffer, read_options=read_options).to_pandas()
+    read_options = csv.ReadOptions(autogenerate_column_names=True)
+    df = csv.read_csv(buffer, read_options=read_options).to_pandas()
     return df
 
 
 def asyncpg_fetch(db, query):
     async def fn():
         conn = await asyncpg.connect(dsn=db)
-        return  pd.DataFrame(await conn.fetch(query))
+        return pd.DataFrame(await conn.fetch(query))
+
     return fn
 
 
@@ -31,6 +32,7 @@ def asyncpg_copy_csv(db, query):
             conn = await asyncpg.connect(dsn=db)
             await conn.copy_from_query(query, output=buf, format="csv")
             return _df_from_buffer(buf)
+
     return fn
 
 
@@ -40,6 +42,7 @@ def psycopg_fetchall(db, query):
             with conn.cursor(binary=True) as cur:
                 cur.execute(query)
                 return pd.DataFrame(cur.fetchall())
+
     return fn
 
 
@@ -47,16 +50,20 @@ def psycopg_copy_csv(db, query):
     def fn():
         with BytesIO() as buf, psycopg.connect(db) as conn:
             with conn.cursor(binary=True) as cur:
-                with cur.copy(f"COPY ({query}) TO STDOUT (FORMAT csv)",) as copy:
+                with cur.copy(
+                    f"COPY ({query}) TO STDOUT (FORMAT csv)",
+                ) as copy:
                     for data in copy:
                         buf.write(data)
             return _df_from_buffer(buf)
+
     return fn
 
 
 def pgeon_copy(db, query):
     def fn():
         return pgeon.copy_query(db, query).to_pandas()
+
     return fn
 
 
@@ -77,23 +84,24 @@ def async_benchmark(fn, n=1):
             _ = await fn()
             elapsed.append(time.time() - start)
         return elapsed
+
     return asyncio.run(wrap())
 
 
 def bench_minute_bars(db, n=1):
-    print('Running minute_bars benchmark...')
+    print("Running minute_bars benchmark...")
 
     query = "select * from minute_bars"
     df = {
-        'asyncpg_fetch': async_benchmark(asyncpg_fetch(db, query), n=n),
-        'asyncpg_copy_csv': async_benchmark(asyncpg_copy_csv(db, query), n=n),
-        'psycopg_fetchall': benchmark(psycopg_fetchall(db, query), n=n),
-        'psycopg_copy_csv': benchmark(psycopg_copy_csv(db, query), n=n),
-        'pgeon_copy': benchmark(pgeon_copy(db, query), n=n),
+        "asyncpg_fetch": async_benchmark(asyncpg_fetch(db, query), n=n),
+        "asyncpg_copy_csv": async_benchmark(asyncpg_copy_csv(db, query), n=n),
+        "psycopg_fetchall": benchmark(psycopg_fetchall(db, query), n=n),
+        "psycopg_copy_csv": benchmark(psycopg_copy_csv(db, query), n=n),
+        "pgeon_copy": benchmark(pgeon_copy(db, query), n=n),
     }
 
     df = pd.DataFrame(df)
-    df.to_csv('minute_bars.csv', index=False)
+    df.to_csv("minute_bars.csv", index=False)
 
     ax = sns.kdeplot(data=df, fill=True)
     ax.get_legend().set_frame_on(False)
@@ -103,10 +111,12 @@ def bench_minute_bars(db, n=1):
     sns.despine(left=True)
 
     ax.figure.tight_layout()
-    ax.figure.savefig('minute_bars.svg')  #, transparent=True)
+    ax.figure.savefig("minute_bars.svg")  # , transparent=True)
 
 
 if __name__ == "__main__":
-    # db = os.environ["PGEON_TEST_DB"]
-    db = "postgresql://localhost:5432/postgres"
-    bench_minute_bars(db, n=3)
+    import os
+    db = os.environ.get(
+        "PGEON_TEST_DB", "postgresql://localhost:5432/postgres"
+    )
+    bench_minute_bars(db, n=100)

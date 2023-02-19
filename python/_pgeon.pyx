@@ -4,7 +4,7 @@
 """Apache Arrow PostgreSQL connector"""
 
 from libcpp.memory cimport shared_ptr
-from pyarrow.lib cimport import_pyarrow, CTable, pyarrow_wrap_table
+from pyarrow.lib cimport CTable, pyarrow_wrap_table
 
 cdef extern from "pgeon.h" namespace "pgeon":
     cdef shared_ptr[CTable] CopyQuery(const char* conninfo, const char* query) nogil
