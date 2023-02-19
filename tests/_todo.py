@@ -1,20 +1,3 @@
-import os
-import pyarrow as pa
-import pyarrow.compute as pc
-
-from pgeon import copy_query
-
-db = os.environ["PGEON_TEST_DB"]
-db = "postgresql://localhost/mytests"
-
-# tbl = copy_query(db, query)
-# tbl.equals(expects)
-
-query = "SELECT * from numeric_table"
-
-# Enumerated types
-query = "SELECT * from person"
-
 # Bit string types
 # TODO which interface should it be ?
 query = "SELECT B'101'::bit(3)"
@@ -80,7 +63,7 @@ query = """SELECT 'a=>1,b=>""'::hstore"""
 query = """SELECT 'a=>1,b=>NULL'::hstore"""
 
 # does not work, apparently no schema
-query = "SELECT ROW('1'::real, '2'::real)"
+query = "SELECT ROW('a', 1)"
 
 # dictionary encoded control ?
 # fixed size handling => templates ?
