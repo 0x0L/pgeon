@@ -6,17 +6,8 @@
   "shutdownAction": "stopCompose",
   "customizations": {
     "vscode": {
-      "settings": {
-        "cpplint.cpplintPath": "/opt/conda/bin/cpplint",
-        "cpplint.lineLength": 90
-      },
-      "extensions": [
-        "ms-vscode.cmake-tools",
-        "ms-vscode.cpptools",
-        "mine.cpplint",
-        "EditorConfig.EditorConfig",
-        "adpyke.vscode-sql-formatter",
-      ],
+      "settings": {},
+      "extensions": []
     }
   }
   // Use 'forwardPorts' to make a list of ports inside the container available locally.

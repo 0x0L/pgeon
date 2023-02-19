@@ -2,13 +2,8 @@ name: pgeon-dev
 channels:
   - conda-forge
 dependencies:
-  # - black
-  # - cmake
-  # - cpplint
   - cxx-compiler
-  # - cython
   - git
   - libpq
-  # - ninja
-  # - pyarrow
+  - pyarrow
   - python=3.11

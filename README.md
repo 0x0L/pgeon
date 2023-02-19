@@ -34,19 +34,16 @@ ninja
 ```python
 from pgeon import copy_query
 db = "postgresql://postgres@localhost:5432/postgres"
-db = "postgresql://localhost:5432/postgres"
+# db = "postgresql://localhost:5432/postgres"
 tbl = copy_query(db, "SELECT TIMESTAMP '2001-01-01 14:00:00'")
 print(tbl)
 ```
 
 ## Performance
 
-Duration distributions from 100 consecutive runs of a query fetching 7 columns (1 timestamp, 2 ints, 4 reals)
-and returning around 4.5 million rows.
+Duration distributions from 100 consecutive runs of a query fetching 7 columns (1 timestamp, 2 ints, 4 reals) and around 4.5 million rows. The result is returned as a `pandas.DataFrame` in all cases.
 
 ![](benchmarks/minute_bars.svg)
-
-The received `pyarrow.Table` can be further converted into a `pandas.DataFrame` in less than 25ms!
 
 ## Try it out
 

@@ -1,55 +1,83 @@
 import asyncio
-import os
 import time
 from io import BytesIO
-from pathlib import Path
 
 import asyncpg
+import pgeon
+import psycopg
+
 import pandas as pd
+import pyarrow as pa
+import pyarrow.csv
 import seaborn as sns
 
-import pgeon
+def _df_from_buffer(buffer):
+    buffer.seek(0)
+    read_options = pa.csv.ReadOptions(autogenerate_column_names=True)
+    df = pa.csv.read_csv(buffer, read_options=read_options).to_pandas()
+    return df
 
-_PATH = Path(__file__).parent
 
-def _bench(fn, n=1):
+def asyncpg_fetch(db, query):
+    async def fn():
+        conn = await asyncpg.connect(dsn=db)
+        return  pd.DataFrame(await conn.fetch(query))
+    return fn
+
+
+def asyncpg_copy_csv(db, query):
+    async def fn():
+        with BytesIO() as buf:
+            conn = await asyncpg.connect(dsn=db)
+            await conn.copy_from_query(query, output=buf, format="csv")
+            return _df_from_buffer(buf)
+    return fn
+
+
+def psycopg_fetchall(db, query):
+    def fn():
+        with psycopg.connect(db) as conn:
+            with conn.cursor(binary=True) as cur:
+                cur.execute(query)
+                return pd.DataFrame(cur.fetchall())
+    return fn
+
+
+def psycopg_copy_csv(db, query):
+    def fn():
+        with BytesIO() as buf, psycopg.connect(db) as conn:
+            with conn.cursor(binary=True) as cur:
+                with cur.copy(f"COPY ({query}) TO STDOUT (FORMAT csv)",) as copy:
+                    for data in copy:
+                        buf.write(data)
+            return _df_from_buffer(buf)
+    return fn
+
+
+def pgeon_copy(db, query):
+    def fn():
+        return pgeon.copy_query(db, query).to_pandas()
+    return fn
+
+
+def benchmark(fn, n=1):
     elapsed = []
     for _ in range(n):
         start = time.time()
-        fn()
+        _ = fn()
         elapsed.append(time.time() - start)
     return elapsed
 
 
-def _abench(fn, n=1):
+def async_benchmark(fn, n=1):
     async def wrap():
         elapsed = []
         for _ in range(n):
             start = time.time()
-            await fn()
+            _ = await fn()
             elapsed.append(time.time() - start)
         return elapsed
     return asyncio.run(wrap())
-
-
-def asyncpg_fetch(db, query):
-    async def wrap():
-        conn = await asyncpg.connect(dsn=db)
-        await conn.fetch(query)
-    return wrap
-
-
-def asyncpg_copy(db, query, format):
-    async def wrap():
-        conn = await asyncpg.connect(dsn=db)
-        buf = BytesIO()
-        await conn.copy_from_query(query, output=buf, format=format)
-        buf.getvalue()
-    return wrap
-
-
-def pgeon_copy(db, query):
-    return lambda: pgeon.copy_query(db, query)
 
 
 def bench_minute_bars(db, n=1):
@@ -57,14 +85,15 @@ def bench_minute_bars(db, n=1):
 
     query = "select * from minute_bars"
     df = {
-        'asyncpg_fetch': _abench(asyncpg_fetch(db, query), n=n),
-        'asyncpg_copy_csv': _abench(asyncpg_copy(db, query, 'csv'), n=n),
-        'asyncpg_copy_binary': _abench(asyncpg_copy(db, query, 'binary'), n=n),
-        'python_pgeon_copy': _bench(pgeon_copy(db, query), n=n),
+        'asyncpg_fetch': async_benchmark(asyncpg_fetch(db, query), n=n),
+        'asyncpg_copy_csv': async_benchmark(asyncpg_copy_csv(db, query), n=n),
+        'psycopg_fetchall': benchmark(psycopg_fetchall(db, query), n=n),
+        'psycopg_copy_csv': benchmark(psycopg_copy_csv(db, query), n=n),
+        'pgeon_copy': benchmark(pgeon_copy(db, query), n=n),
     }
 
     df = pd.DataFrame(df)
-    df.to_csv(_PATH / 'minute_bars.csv', index=False)
+    df.to_csv('minute_bars.csv', index=False)
 
     ax = sns.kdeplot(data=df, fill=True)
     ax.get_legend().set_frame_on(False)
@@ -74,9 +103,10 @@ def bench_minute_bars(db, n=1):
     sns.despine(left=True)
 
     ax.figure.tight_layout()
-    ax.figure.savefig(_PATH / 'minute_bars.svg')  #, transparent=True)
+    ax.figure.savefig('minute_bars.svg')  #, transparent=True)
 
 
 if __name__ == "__main__":
-    db = os.environ["PGEON_TEST_DB"]
-    bench_minute_bars(db, n=100)
+    # db = os.environ["PGEON_TEST_DB"]
+    db = "postgresql://localhost:5432/postgres"
+    bench_minute_bars(db, n=3)

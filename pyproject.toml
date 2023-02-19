@@ -30,6 +30,6 @@ dependencies = ["pyarrow"]
 
 [project.optional-dependencies]
 tests = ["pytest"]
-benchmarks = ["asyncpg", "psycopg"]
+benchmarks = ["asyncpg", "psycopg[binary]", "pandas", "seaborn"]
 
 [tool.setuptools_scm]
