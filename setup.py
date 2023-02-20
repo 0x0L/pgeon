@@ -11,8 +11,12 @@ include_dir = "include"
 source_dir = "src"
 source_files = [str(p) for p in Path(source_dir).glob("**/*.cc")]
 
-pg_include = subprocess.check_output(['pg_config', '--includedir']).decode().strip()
-pg_libdir = subprocess.check_output(['pg_config', '--libdir']).decode().strip()
+try:
+    pg_include = subprocess.check_output(['pg_config', '--includedir']).decode().strip()
+    pg_libdir = subprocess.check_output(['pg_config', '--libdir']).decode().strip()
+except:
+    pg_include = subprocess.check_output(['pkg-config', '--cflags-only-I', 'libpq']).decode().strip()[2:]
+    pg_libdir = subprocess.check_output(['pkg-config', '--libs-only-L', 'libpq']).decode().strip()[2:]
 
 extra_compile_args = ["-std=c++17"]
 if sys.platform == "darwin":
