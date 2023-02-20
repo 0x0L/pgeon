@@ -2,18 +2,7 @@ name: pgeon-dev
 channels:
   - conda-forge
 dependencies:
-  # required
-  - python
-  - arrow-cpp
-  - pyarrow
-  - libpq
-
-  # The compiler packages are meta-packages and install the correct compiler (activation) packages on the respective platforms.
-  - c-compiler
   - cxx-compiler
-
-  # Dev
   - git
-  - cmake
-  - ninja
-  - postgresql
+  - libpq
+  - python=3.11

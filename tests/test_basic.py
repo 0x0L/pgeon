@@ -10,7 +10,7 @@ u_int = pc.round(u, round_mode="towards_infinity")
 
 tests = [
     (
-        "SELECT * FROM (VALUES (True), (False)) AS FOO",
+        "SELECT * FROM (VALUES (True), (False)) AS foo",
         pa.table({"column1": [True, False]}),
     ),
     (
