@@ -5,5 +5,5 @@ if command -v port &> /dev/null
 then
     sudo port install postgresql11
 else
-    brew install libpq
+    brew install postgresql
 fi

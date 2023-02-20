@@ -10,7 +10,7 @@ include_dir = "include"
 source_dir = "src"
 source_files = [str(p) for p in Path(source_dir).glob("**/*.cc")]
 
-extra_compile_args = ["-std=c++17", "-I/usr/local/include/postgresql", "-I/usr/include/postgresql"]
+extra_compile_args = ["-std=c++17"]
 if sys.platform == "darwin":
     extra_compile_args.append("-mmacosx-version-min=10.14")
 
