@@ -41,3 +41,4 @@ build-verbosity = 2
 
 [tool.cibuildwheel.macos]
 before-build = "bash ci/macos/prepare-build.sh"
+repair-wheel-command = "cp {wheel} {dest_dir}"
