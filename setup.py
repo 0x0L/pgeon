@@ -31,7 +31,7 @@ ext_libraries = [
         "pgeon_cpp",
         {
             "sources": source_files,
-            "include_dirs": [include_dir, source_dir, pa.get_include()] + [pg_include],
+            "include_dirs": [include_dir, source_dir, pa.get_include()] + pg_include,
             "language": "c++",
             "macros": [("_GLIBCXX_USE_CXX11_ABI", "0")],
             "cflags": extra_compile_args,
