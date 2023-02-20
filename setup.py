@@ -1,3 +1,4 @@
+import subprocess
 import sys
 from pathlib import Path
 from setuptools import setup, Extension
@@ -10,6 +11,9 @@ include_dir = "include"
 source_dir = "src"
 source_files = [str(p) for p in Path(source_dir).glob("**/*.cc")]
 
+pg_include = subprocess.check_output(['pg_config', '--includedir']).decode().strip()
+pg_libdir = subprocess.check_output(['pg_config', '--libdir']).decode().strip()
+
 extra_compile_args = ["-std=c++17"]
 if sys.platform == "darwin":
     extra_compile_args.append("-mmacosx-version-min=10.14")
@@ -21,7 +25,7 @@ ext_libraries = [
         "pgeon_cpp",
         {
             "sources": source_files,
-            "include_dirs": [include_dir, source_dir, pa.get_include()],
+            "include_dirs": [include_dir, source_dir, pa.get_include(), pg_include],
             "language": "c++",
             "cflags": extra_compile_args,
         },
@@ -35,7 +39,7 @@ extensions = [
         language="c++",
         include_dirs=[include_dir, np.get_include(), pa.get_include()],
         libraries=["pgeon_cpp", "pq"] + pa.get_libraries(),
-        library_dirs=pa.get_library_dirs(),
+        library_dirs=[pg_libdir] + pa.get_library_dirs(),
         extra_compile_args=extra_compile_args,
     )
 ]
