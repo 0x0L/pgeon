@@ -1,4 +1,4 @@
-# import os
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -7,6 +7,11 @@ from setuptools import setup, Extension
 from Cython.Build import cythonize
 import numpy as np
 import pyarrow as pa
+
+# Activate old ABI used by the pyarrow pypi wheels
+macros = [("_GLIBCXX_USE_CXX11_ABI", "0")]
+if os.environ.get("CONDA_BUILD"):
+    macros = None
 
 include_dir = "include"
 source_dir = "src"
@@ -33,7 +38,7 @@ ext_libraries = [
             "sources": source_files,
             "include_dirs": [include_dir, source_dir, pa.get_include()] + pg_include,
             "language": "c++",
-            "macros": [("_GLIBCXX_USE_CXX11_ABI", "0")],
+            "macros": macros,
             "cflags": extra_compile_args,
         },
     ]

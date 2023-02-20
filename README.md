@@ -25,19 +25,23 @@ The actual query performed is `COPY ({query}) TO STDOUT (FORMAT binary)`, see [t
 
 ## Installation
 
-`pgeon` requires [libpq](https://www.postgresql.org/docs/current/libpq.html) to be available on your system. You'll also need a C++ compiler.
+Building and running `pgeon` requires [libpq](https://www.postgresql.org/docs/current/libpq.html) to be available on your system.
 
 ### Python
 
-The preferred way to get started is to use conda. This will take care of all the dependencies.
+Install from source using pip with
 
 ```shell
-conda env create -f environment.yml
-conda activate pgeon-dev
+git clone https://github.com/0x0L/pgeon.git
+cd pgeon
 pip install .
 ```
 
-See [this issue](https://github.com/0x0L/pgeon/issues/8) for installation in a non conda based environment.
+On linux, if `pyarrow` is already installed as a conda package, you may want to use
+
+```
+CONDA_BUILD=1 pip install .
+```
 
 ### [optional] C++ library and tools
 

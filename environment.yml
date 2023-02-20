@@ -5,5 +5,4 @@ dependencies:
   - cxx-compiler
   - git
   - libpq
-  - pyarrow
   - python=3.11
