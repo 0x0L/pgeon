@@ -45,4 +45,4 @@ repair-wheel-command = "cp {wheel} {dest_dir}"
 
 [tool.cibuildwheel.linux]
 before-build = "bash ci/linux/prepare-build.sh"
-repair-wheel-command = "cp {wheel} {dest_dir}"
+repair-wheel-command = "bash ci/linux/repair-wheel.sh {wheel} {dest_dir}"
