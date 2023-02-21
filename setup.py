@@ -46,7 +46,7 @@ ext_libraries = [
 
 extensions = [
     Extension(
-        "_pgeon",
+        name="pgeon._pgeon",
         sources=["python/_pgeon.pyx"],
         language="c++",
         include_dirs=[include_dir, np.get_include(), pa.get_include()],
@@ -61,6 +61,7 @@ setup(
     name="pgeon",
     ext_modules=cythonize(extensions),
     libraries=ext_libraries,
-    package_dir={"": "python"},
+    packages=["pgeon"],
+    package_dir={"pgeon": "python"},
     include_package_data=False,
 )
