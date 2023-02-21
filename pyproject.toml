@@ -38,6 +38,7 @@ benchmarks = ["asyncpg", "psycopg[binary]", "pandas", "seaborn"]
 build = "cp39-* cp310-* cp311-*"
 skip = "*_i686 *-musllinux_*"
 build-verbosity = 2
+test-command = "pytest {project}/tests"
 
 [tool.cibuildwheel.macos]
 before-build = "bash ci/macos/prepare-build.sh"
