@@ -19,6 +19,7 @@ source_files = [str(p) for p in Path(source_dir).glob("**/*.cc")]
 
 pg_include = []
 pg_libdir = []
+pg_lib = "pq"
 try:
     pg_include = [subprocess.check_output(['pg_config', '--includedir']).decode().strip()]
     pg_libdir = [subprocess.check_output(['pg_config', '--libdir']).decode().strip()]
@@ -28,6 +29,9 @@ except:
 extra_compile_args = ["-std=c++17"]
 if sys.platform == "darwin":
     extra_compile_args.append("-mmacosx-version-min=10.14")
+elif sys.platform == "win32":
+    pg_lib = "libpq"
+    extra_compile_args = ["/std:c++latest"]
 
 pa.create_library_symlinks()
 
@@ -50,7 +54,7 @@ extensions = [
         sources=["python/_pgeon.pyx"],
         language="c++",
         include_dirs=[include_dir, np.get_include(), pa.get_include()],
-        libraries=["pgeon_cpp", "pq"] + pa.get_libraries(),
+        libraries=["pgeon_cpp", pg_lib] + pa.get_libraries(),
         library_dirs=pg_libdir + pa.get_library_dirs(),
         extra_compile_args=extra_compile_args,
     )
