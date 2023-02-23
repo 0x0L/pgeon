@@ -40,7 +40,6 @@ test-command = "pytest {project}/tests"
 test-extras = ["tests"]
 
 [tool.cibuildwheel.macos]
-before-build = "bash ci/macos/prepare-build.sh"
 repair-wheel-command = "cp {wheel} {dest_dir}"
 
 [tool.cibuildwheel.linux]
