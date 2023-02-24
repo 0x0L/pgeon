@@ -20,6 +20,7 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
             echo "$PGBIN" >> $GITHUB_PATH
+            echo "$PGROOT\lib" >> $GITHUB_PATH
             echo "PQ_LIB_DIR=$PGROOT\lib" >> $GITHUB_ENV
           fi
         shell: bash
