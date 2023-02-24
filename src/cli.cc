@@ -1,8 +1,9 @@
+// Copyright 2022 nullptr
+
 #include <pgeon.h>
 #include <iostream>
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
     if (argc != 3) {
         std::cerr << "Usage: " << argv[0] << " DB QUERY" << std::endl;
         return 1;
