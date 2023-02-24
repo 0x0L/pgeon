@@ -25,3 +25,6 @@ install(
     TARGETS pgeon
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+add_executable(pgeon-cli cli.cc)
+target_link_libraries(pgeon-cli PRIVATE pgeon arrow_shared PostgreSQL::PostgreSQL)
