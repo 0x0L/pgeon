@@ -26,10 +26,17 @@ pg_lib = "pq"
 pg_include = []
 pg_libdir = []
 try:
+<<<<<<< HEAD
     pg_include = [pg_config_dir("--includedir")]
     pg_libdir = [pg_config_dir("--libdir")]
 except Exception:
     print("pg_config not found in PATH")
+=======
+    pg_include = [subprocess.check_output(['pg_config', '--includedir']).decode().strip()]
+    pg_libdir = [subprocess.check_output(['pg_config', '--libdir']).decode().strip()]
+except:
+    raise(RuntimeError("pg_config needs to be available in the PATH"))
+>>>>>>> 8d67092 (adding postgres to path on win)
 
 extra_compile_args = ["-std=c++17"]
 if sys.platform == "darwin":
