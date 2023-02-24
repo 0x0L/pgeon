@@ -16,13 +16,13 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-        - name: Add pg_config to path on Windows
-          run: |
-            if [ "$RUNNER_OS" == "Windows" ]; then
-              echo "$PGBIN" >> $GITHUB_PATH
-              echo "PQ_LIB_DIR=$PGROOT\lib" >> $GITHUB_ENV
-            fi
-          shell: bash
+      - name: Add pg_config to path on Windows
+        run: |
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            echo "$PGBIN" >> $GITHUB_PATH
+            echo "PQ_LIB_DIR=$PGROOT\lib" >> $GITHUB_ENV
+          fi
+        shell: bash
 
       - uses: actions/checkout@v3
 
