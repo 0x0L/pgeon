@@ -22,27 +22,20 @@ include_dir = "include"
 src_dir = "src"
 src_files = [str(p) for p in Path(src_dir).glob("**/*.cc") if p.name != "cli.cc"]
 
-pg_lib = "pq"
+pg_lib = "pq" if sys.platform != "win32" else "libpq"
+
 pg_include = []
 pg_libdir = []
 try:
-<<<<<<< HEAD
     pg_include = [pg_config_dir("--includedir")]
     pg_libdir = [pg_config_dir("--libdir")]
 except Exception:
     print("pg_config not found in PATH")
-=======
-    pg_include = [subprocess.check_output(['pg_config', '--includedir']).decode().strip()]
-    pg_libdir = [subprocess.check_output(['pg_config', '--libdir']).decode().strip()]
-except:
-    raise(RuntimeError("pg_config needs to be available in the PATH"))
->>>>>>> 8d67092 (adding postgres to path on win)
 
 extra_compile_args = ["-std=c++17"]
 if sys.platform == "darwin":
     extra_compile_args.append("-mmacosx-version-min=10.14")
 elif sys.platform == "win32":
-    pg_lib = "libpq"
     extra_compile_args = ["/std:c++latest"]
 
 pa.create_library_symlinks()
