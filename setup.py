@@ -2,11 +2,11 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from setuptools import setup, Extension
 
-from Cython.Build import cythonize
 import numpy as np
 import pyarrow as pa
+from Cython.Build import cythonize
+from setuptools import Extension, setup
 
 
 def pg_config_dir(arg):
@@ -26,7 +26,7 @@ src_files = [str(p) for p in Path(src_dir).glob("**/*.cc") if p.name != "cli.cc"
 try:
     pg_include = [pg_config_dir("--includedir")]
     pg_libdir = [pg_config_dir("--libdir")]
-except:
+except Exception:
     print("pg_config not found in PATH")
     pg_include = []
     pg_libdir = []
