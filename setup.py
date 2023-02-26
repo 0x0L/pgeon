@@ -2,11 +2,16 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from setuptools import setup, Extension
 
-from Cython.Build import cythonize
 import numpy as np
 import pyarrow as pa
+from Cython.Build import cythonize
+from setuptools import Extension, setup
+
+
+def pg_config_dir(arg):
+    return subprocess.check_output(["pg_config", arg]).decode().strip()
+
 
 # Activate old ABI used by the pyarrow pypi wheels
 macros = [("_GLIBCXX_USE_CXX11_ABI", "0")]
@@ -14,16 +19,17 @@ if os.environ.get("CONDA_BUILD"):
     macros = None
 
 include_dir = "include"
-source_dir = "src"
-source_files = [str(p) for p in Path(source_dir).glob("**/*.cc")]
+src_dir = "src"
+src_files = [str(p) for p in Path(src_dir).glob("**/*.cc") if p.name != "cli.cc"]
 
-pg_include = []
-pg_libdir = []
+
 try:
-    pg_include = [subprocess.check_output(['pg_config', '--includedir']).decode().strip()]
-    pg_libdir = [subprocess.check_output(['pg_config', '--libdir']).decode().strip()]
-except:
-    pass
+    pg_include = [pg_config_dir("--includedir")]
+    pg_libdir = [pg_config_dir("--libdir")]
+except Exception:
+    print("pg_config not found in PATH")
+    pg_include = []
+    pg_libdir = []
 
 extra_compile_args = ["-std=c++17"]
 if sys.platform == "darwin":
@@ -35,8 +41,8 @@ ext_libraries = [
     [
         "pgeon_cpp",
         {
-            "sources": source_files,
-            "include_dirs": [include_dir, source_dir, pa.get_include()] + pg_include,
+            "sources": src_files,
+            "include_dirs": [include_dir, src_dir, pa.get_include()] + pg_include,
             "language": "c++",
             "macros": macros,
             "cflags": extra_compile_args,
