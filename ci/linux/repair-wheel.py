@@ -1,4 +1,4 @@
-# /usr/bin/env python
+#!/usr/bin/env python
 """Ignore libarrow libraries in the wheel"""
 
 import logging
