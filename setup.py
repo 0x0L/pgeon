@@ -22,18 +22,21 @@ include_dir = "include"
 src_dir = "src"
 src_files = [str(p) for p in Path(src_dir).glob("**/*.cc") if p.name != "cli.cc"]
 
+pg_lib = "pq" if sys.platform != "win32" else "libpq"
 
+pg_include = []
+pg_libdir = []
 try:
     pg_include = [pg_config_dir("--includedir")]
     pg_libdir = [pg_config_dir("--libdir")]
 except Exception:
     print("pg_config not found in PATH")
-    pg_include = []
-    pg_libdir = []
 
 extra_compile_args = ["-std=c++17"]
 if sys.platform == "darwin":
     extra_compile_args.append("-mmacosx-version-min=10.14")
+elif sys.platform == "win32":
+    extra_compile_args = ["/std:c++latest"]
 
 pa.create_library_symlinks()
 
@@ -56,7 +59,7 @@ extensions = [
         sources=["python/_pgeon.pyx"],
         language="c++",
         include_dirs=[include_dir, np.get_include(), pa.get_include()],
-        libraries=["pgeon_cpp", "pq"] + pa.get_libraries(),
+        libraries=["pgeon_cpp", pg_lib] + pa.get_libraries(),
         library_dirs=pg_libdir + pa.get_library_dirs(),
         extra_compile_args=extra_compile_args,
     )

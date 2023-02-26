@@ -34,11 +34,13 @@ benchmarks = ["asyncpg", "psycopg[binary]", "pandas", "seaborn"]
 
 [tool.cibuildwheel]
 build = "cp39-* cp310-* cp311-*"
-skip = "*_i686 *-musllinux_*"
+skip = ["*_i686", "*-musllinux_*", "*-win32", "pp*"]
 build-verbosity = 2
+test-command = "pytest {project}/tests"
+test-extras = ["tests"]
+test-skip = "*-win*"
 
 [tool.cibuildwheel.macos]
-before-build = "bash ci/macos/prepare-build.sh"
 repair-wheel-command = "cp {wheel} {dest_dir}"
 
 [tool.cibuildwheel.linux]
