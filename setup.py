@@ -15,7 +15,7 @@ if os.environ.get("CONDA_BUILD"):
 
 include_dir = "include"
 source_dir = "src"
-source_files = [str(p) for p in Path(source_dir).glob("**/*.cc")]
+source_files = [str(p) for p in Path(source_dir).glob("**/*.cc") if p.name != "cli.cc"]
 
 pg_include = []
 pg_libdir = []
