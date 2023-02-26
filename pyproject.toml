@@ -41,9 +41,7 @@ test-extras = ["tests"]
 test-skip = "*-win*"
 
 [tool.cibuildwheel.macos]
-before-build = "bash ci/macos/prepare-build.sh"
 repair-wheel-command = "python ci/macos/repair-wheel.py {wheel} {dest_dir} {delocate_archs}"
-
 
 [tool.cibuildwheel.linux]
 before-build = "bash ci/linux/prepare-build.sh"
