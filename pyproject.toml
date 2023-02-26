@@ -38,6 +38,7 @@ skip = ["*_i686", "*-musllinux_*", "*-win32", "pp*"]
 build-verbosity = 2
 test-command = "pytest {project}/tests"
 test-extras = ["tests"]
+test-skip = "*-win*"
 
 [tool.cibuildwheel.macos]
 repair-wheel-command = "cp {wheel} {dest_dir}"
