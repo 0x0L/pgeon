@@ -19,6 +19,6 @@ if [ "$RUNNER_OS" == "Linux" ]; then
   su postgres -c "initdb --locale=C -E UTF-8 $PGDATA"
   su postgres -c "pg_ctl -D $PGDATA start"
 else
-  initdb --locale=C -E UTF-8 $PGDATA
+  initdb --username=postgres --locale=C -E UTF-8 $PGDATA
   pg_ctl -D $PGDATA start
 fi
