@@ -36,14 +36,17 @@ benchmarks = ["asyncpg", "psycopg[binary]", "pandas", "seaborn"]
 build = "cp39-* cp310-* cp311-*"
 skip = ["*_i686", "*-musllinux_*", "*-win32", "pp*"]
 build-verbosity = 2
+before-all = "bash ci/setup-db.sh"
+environment = { PGEON_TEST_DB='postgresql://testuser:testpwd@localhost:1234/testdb' }
 test-command = "pytest {project}/tests"
 test-extras = ["tests"]
 
 [tool.cibuildwheel.macos]
+environment = { MACOSX_DEPLOYMENT_TARGET='10.14' }
 repair-wheel-command = "python ci/macos/repair-wheel.py {wheel} {dest_dir} {delocate_archs}"
 
 [tool.cibuildwheel.linux]
-before-build = "bash ci/linux/prepare-build.sh"
+environment-pass = ["RUNNER_OS"]
 repair-wheel-command = "/opt/_internal/pipx/venvs/auditwheel/bin/python ci/linux/repair-wheel.py {wheel} {dest_dir}"
 
 [tool.cibuildwheel.windows]
