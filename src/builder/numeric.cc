@@ -5,10 +5,6 @@
 #include "builder/common.h"
 #include "builder/numeric.h"
 
-#ifdef _MSC_VER
-typedef int64_t __int128_t;
-#endif
-
 namespace pgeon {
 
 #define NUMERIC_SIGN_MASK 0xC000
@@ -63,7 +59,7 @@ size_t NumericBuilder::Append(const char* buf) {
   int16_t sign = ntoh16(rawdata->sign);
   int16_t scale = scale_;  // ntoh16(rawdata->dscale);
 
-  __int128_t value = 0;
+  arrow::Decimal128 value = 0;
   int16_t d, dig;
 
   if ((sign & NUMERIC_SIGN_MASK) == NUMERIC_NAN) {
@@ -75,7 +71,7 @@ size_t NumericBuilder::Append(const char* buf) {
   for (d = 0; d <= weight; d++) {
     dig = (d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
     if (dig < 0 || dig >= NBASE) printf("Numeric digit is out of range: %d", dig);
-    value = NBASE * value + (__int128_t)dig;
+    value = NBASE * value + dig;
   }
 
   /* makes floating point portion if any */
@@ -99,7 +95,7 @@ size_t NumericBuilder::Append(const char* buf) {
   /* is it a negative value? */
   if ((sign & NUMERIC_NEG) != 0) value = -value;
 
-  auto status = ptr_->Append(reinterpret_cast<uint8_t*>(&value));
+  auto status = ptr_->Append(value);
 
   return 4 + len;
 }
@@ -122,10 +118,10 @@ size_t MonetaryBuilder::Append(const char* buf) {
     return 4;
   }
 
-  __int128_t value = unpack_int64(buf);
+  arrow::Decimal128 value = unpack_int64(buf);
   buf += 8;
 
-  auto status = ptr_->Append(reinterpret_cast<uint8_t*>(&value));
+  auto status = ptr_->Append(value);
   return 4 + len;
 }
 
