@@ -37,5 +37,6 @@ user=testuser
 password=testpwd
 dbname=testdb
 EOF
+export PGSERVICEFILE="$PGDATA/pg_service.conf"
 
 createdb -O testuser testdb
