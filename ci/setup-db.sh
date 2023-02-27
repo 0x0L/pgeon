@@ -12,8 +12,7 @@ if [ "$RUNNER_OS" == "Linux" ]; then
   export RUNNER_TEMP="/tmp"
 fi
 
-echo "Set up database"
-
+echo "Start database"
 PGDATA="$RUNNER_TEMP/pgdata"
 
 if [ "$RUNNER_OS" == "Linux" ]; then

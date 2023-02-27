@@ -1,10 +1,5 @@
 [build-system]
-requires = [
-  "setuptools",
-  "setuptools_scm[toml]",
-  "cython",
-  "pyarrow"
-]
+requires = ["setuptools", "setuptools_scm[toml]", "cython", "pyarrow"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -37,12 +32,12 @@ build = "cp39-* cp310-* cp311-*"
 skip = ["*_i686", "*-musllinux_*", "*-win32", "pp*"]
 build-verbosity = 2
 before-all = "bash ci/setup-db.sh"
-environment = { PGEON_TEST_DB='postgresql://postgres@localhost/postgres' }
+environment = { PGEON_TEST_DB = 'postgresql://postgres@localhost/postgres' }
 test-command = "pytest {project}/tests"
 test-extras = ["tests"]
 
 [tool.cibuildwheel.macos]
-environment = { MACOSX_DEPLOYMENT_TARGET='10.14' }
+environment = { MACOSX_DEPLOYMENT_TARGET = '10.14' }
 repair-wheel-command = "python ci/macos/repair-wheel.py {wheel} {dest_dir} {delocate_archs}"
 
 [tool.cibuildwheel.linux]
@@ -50,5 +45,4 @@ environment-pass = ["RUNNER_OS"]
 repair-wheel-command = "/opt/_internal/pipx/venvs/auditwheel/bin/python ci/linux/repair-wheel.py {wheel} {dest_dir}"
 
 [tool.cibuildwheel.windows]
-environment = { PGEON_TEST_DB='postgresql://localhost/postgres' }
 repair-wheel-command = "bash ci/windows/repair-wheel.sh {wheel} {dest_dir}"
