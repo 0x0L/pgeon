@@ -2,41 +2,24 @@
 set -e
 
 if [ "$RUNNER_OS" == "Linux" ]; then
-echo "Install postgres"
-yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm || true
-yum install -y postgresql11-devel || true
+  echo "Install postgres"
+  yum install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+  yum install -y postgresql15-server postgresql15-devel
 
-ln -sf /usr/pgsql-11/bin/pg_config /usr/bin/
-export RUNNER_TEMP="/tmp"
+  ln -sf /usr/pgsql-15/bin/pg_config /usr/bin/
+
+  export PATH=/usr/pgsql-15/bin:$PATH
+  export RUNNER_TEMP="/tmp"
 fi
 
 echo "Set up database"
 
-export PGDATA="$RUNNER_TEMP/pgdata"
-export PWFILE="$RUNNER_TEMP/pwfile"
+PGDATA="$RUNNER_TEMP/pgdata"
 
-echo 'testpwd' > $PWFILE
-
-initdb \
-  --username="testuser" \
-  --pwfile="$PWFILE" \
-  --auth="scram-sha-256" \
-  --encoding="UTF-8" \
-  --locale="en_US.UTF-8" \
-  --no-instructions
-
-echo "unix_socket_directories = ''" >> "$PGDATA/postgresql.conf"
-echo "port = 1234" >> "$PGDATA/postgresql.conf"
-pg_ctl start
-
-cat <<EOF > "$PGDATA/pg_service.conf"
-[testuser]
-host=localhost
-port=1234
-user=testuser
-password=testpwd
-dbname=testdb
-EOF
-export PGSERVICEFILE="$PGDATA/pg_service.conf"
-
-createdb -O testuser testdb
+if [ "$RUNNER_OS" == "Linux" ]; then
+  su postgres -c "initdb --locale=C -E UTF-8 $PGDATA"
+  su postgres -c "pg_ctl -D $PGDATA start"
+else
+  initdb --locale=C -E UTF-8 $PGDATA
+  pg_ctl -D $PGDATA start
+fi
