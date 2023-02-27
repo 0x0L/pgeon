@@ -1,17 +1,18 @@
 # distutils: language=c++
 # cython: language_level=3
-
-"""Apache Arrow PostgreSQL connector"""
+# cython: binding=True
 
 from libcpp.memory cimport shared_ptr
 from pyarrow.lib cimport CTable, pyarrow_wrap_table
+
+import pyarrow
 
 cdef extern from "pgeon.h" namespace "pgeon":
     cdef shared_ptr[CTable] CopyQuery(const char* conninfo, const char* query) nogil
 
 
-def copy_query(conninfo : str, query : str):
-    """Perform a query
+def copy_query(conninfo : str, query : str) -> pyarrow.Table:
+    """Perform a query using the COPY interface
 
     Parameters
     ----------

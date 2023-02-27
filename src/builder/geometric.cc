@@ -15,7 +15,7 @@ inline size_t AppendFlatDoubleHelper(const char* buf, arrow::StructBuilder* ptr)
   }
 
   auto status = ptr->Append();
-  for (size_t i = 0; i < ptr->num_children(); i++) {
+  for (int i = 0; i < ptr->num_children(); i++) {
     double value = unpack_double(buf);
     buf += 8;
 
@@ -117,7 +117,7 @@ size_t PathBuilder::Append(const char* buf) {
   // TODO(xav) could it be null ?
   status = point_list_builder_->Append();
 
-  for (size_t i = 0; i < npts; i++) {
+  for (int32_t i = 0; i < npts; i++) {
     status = point_builder_->Append();
 
     double x = unpack_double(buf);
@@ -160,7 +160,7 @@ size_t PolygonBuilder::Append(const char* buf) {
   // TODO(xav) could it be null ?
   auto status = ptr_->Append();
 
-  for (size_t i = 0; i < npts; i++) {
+  for (int32_t i = 0; i < npts; i++) {
     status = point_builder_->Append();
 
     double x = unpack_double(buf);

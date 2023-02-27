@@ -34,7 +34,7 @@ size_t TsVectorBuilder::Append(const char* buf) {
   buf += 4;
 
   int16_t npos;
-  for (size_t i = 0; i < size; i++) {
+  for (int32_t i = 0; i < size; i++) {
     int16_t flen = 0;
     while (*(buf + flen) != '\0') flen++;
 
@@ -46,7 +46,7 @@ size_t TsVectorBuilder::Append(const char* buf) {
     npos = unpack_int16(buf);
     buf += 2;
 
-    for (size_t j = 0; j < npos; j++) {
+    for (int16_t j = 0; j < npos; j++) {
       int16_t pos = unpack_int16(buf);
       buf += 2;
 
@@ -104,7 +104,7 @@ size_t TsQueryBuilder::Append(const char* buf) {
   buf += 4;
 
   int16_t npos;
-  for (size_t i = 0; i < size; i++) {
+  for (int32_t i = 0; i < size; i++) {
     status = value_builder_->Append();
 
     int8_t type = *buf;

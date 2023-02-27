@@ -24,14 +24,14 @@ int32_t TableBuilder::Append(const char* cursor) {
   if (nfields == -1) return 2;
 
   // const char* cur2 = cur;
-  // for (size_t i = 1; i < nfields; i++)
+  // for (int16_t i = 1; i < nfields; i++)
   // {
   //     cur2 += unpack_int32(cur2) + 4;
   //     fields_offsets_[i] = cur2 - cur;
   // }
 
   // #pragma omp parallel for
-  for (int i = 0; i < nfields; i++) {
+  for (int16_t i = 0; i < nfields; i++) {
     cur += builders_[i]->Append(cur);
     // builders_[i]->Append(cur + fields_offsets_[i]);
   }
