@@ -14,39 +14,32 @@ tests = [
         "SELECT * FROM (VALUES (True), (False)) AS foo",
         pa.table({"column1": [True, False]}),
     ),
-    pytest.param(
-        (
-            """
-SELECT
-    x::smallint AS int16,
-    x::integer AS int32,
-    x::bigint AS int64,
-    x::real AS float,
-    x::double precision AS double,
-    x::numeric(13, 3) AS numeric_13_3,
-    x::numeric AS numeric_default
+    (
+        """SELECT
+x::smallint AS int16,
+x::integer AS int32,
+x::bigint AS int64,
+x::real AS float,
+x::double precision AS double,
+x::numeric(13, 3) AS numeric_13_3,
+x::numeric AS numeric_default
 FROM generate_series(-3.5, 3.5, 1) AS x
 """,
-            pa.table(
-                {
-                    "int16": u_int.cast(pa.int16()),
-                    "int32": u_int.cast(pa.int32()),
-                    "int64": u_int.cast(pa.int64()),
-                    "float": u.cast(pa.float32()),
-                    "double": u,
-                    "numeric_13_3": u.cast(pa.decimal128(13, 3)),
-                    "numeric_default": u.cast(pa.decimal128(22, 6)),
-                }
-            ),
+        pa.table(
+            {
+                "int16": u_int.cast(pa.int16()),
+                "int32": u_int.cast(pa.int32()),
+                "int64": u_int.cast(pa.int64()),
+                "float": u.cast(pa.float32()),
+                "double": u,
+                "numeric_13_3": u.cast(pa.decimal128(13, 3)),
+                "numeric_default": u.cast(pa.decimal128(22, 6)),
+            }
         ),
-        marks=pytest.mark.xfail(sys.platform == "win32", reason="Bug on Windows"),
     ),
-    pytest.param(
-        (
-            "SELECT '12.3342'::money",
-            pa.table({"money": pa.array([12.33]).cast(pa.decimal128(22, 2))}),
-        ),
-        marks=pytest.mark.xfail(sys.platform == "win32", reason="Bug on Windows"),
+    (
+        "SELECT '12.3342'::money",
+        pa.table({"money": pa.array([12.33]).cast(pa.decimal128(22, 2))}),
     ),
     ("SELECT 'ok'::character(4)", pa.table({"bpchar": pa.array(["ok  "])})),
     ("SELECT 'too long'::varchar(5)", pa.table({"varchar": pa.array(["too l"])})),
