@@ -82,7 +82,7 @@ size_t HstoreBuilder::Append(const char* buf) {
   buf += 4;
 
   int32_t flen;
-  for (size_t i = 0; i < pcount; i++) {
+  for (int32_t i = 0; i < pcount; i++) {
     flen = unpack_int32(buf);
     buf += 4;
 

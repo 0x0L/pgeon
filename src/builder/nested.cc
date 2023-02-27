@@ -32,7 +32,7 @@ size_t ListBuilder::Append(const char* buf) {
 
   // Element will be flattened
   int32_t nitems = 1;
-  for (size_t i = 0; i < ndim; i++) {
+  for (int32_t i = 0; i < ndim; i++) {
     int32_t dim = unpack_int32(buf);
     buf += 4;
     // int32_t lb = unpack_int32(buf);
@@ -41,7 +41,7 @@ size_t ListBuilder::Append(const char* buf) {
   }
 
   auto status = ptr_->Append();
-  for (size_t i = 0; i < nitems; i++) {
+  for (int32_t i = 0; i < nitems; i++) {
     buf += value_builder_->Append(buf);
   }
 
@@ -78,9 +78,8 @@ size_t StructBuilder::Append(const char* buf) {
   auto status = ptr_->Append();
 
   int32_t validcols = unpack_int32(buf);
-  buf += 4;
-
   assert(validcols == ncolumns_);
+  buf += 4;
 
   for (size_t i = 0; i < ncolumns_; i++) {
     // int32_t column_type = unpack_int32(buf);

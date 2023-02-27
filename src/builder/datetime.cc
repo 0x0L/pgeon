@@ -92,7 +92,7 @@ size_t IntervalBuilder::Append(const char* buf) {
     return 4;
   }
 
-  static const int64_t kMicrosecondsPerDay = 24 * 3600 * 1000000LL;
+  // static const int64_t kMicrosecondsPerDay = 24 * 3600 * 1000000LL;
   int64_t nanosecs = unpack_int64(buf) * 1000LL;
   int32_t days = unpack_int32(buf + 8);
   int32_t months = unpack_int32(buf + 12);

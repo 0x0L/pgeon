@@ -32,7 +32,7 @@ struct Int2Recv {
 };
 
 struct Int4Recv {
-  static inline int64_t recv(const char* x) { return unpack_int32(x); }
+  static inline int32_t recv(const char* x) { return unpack_int32(x); }
 };
 
 struct Int8Recv {

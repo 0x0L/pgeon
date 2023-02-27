@@ -88,7 +88,7 @@ size_t PgSnapshotBuilder::Append(const char* buf) {
   status = xmin_builder_->Append(xmin);
   status = xmax_builder_->Append(xmax);
 
-  for (size_t i = 0; i < nxip; i++) {
+  for (int32_t i = 0; i < nxip; i++) {
     int64_t xip = unpack_int64(buf);
     buf += 8;
     status = value_builder_->Append(xip);

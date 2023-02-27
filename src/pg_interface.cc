@@ -26,7 +26,7 @@ ColumnVector ColumnTypesForQuery(PGconn* conn, const char* query) {
   int n = PQnfields(res);
   ColumnVector fields(n);
 
-  for (size_t i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
     const char* name = PQfname(res, i);
     Oid oid = PQftype(res, i);
     int mod = PQfmod(res, i);
@@ -64,7 +64,7 @@ WHERE
   int nfields = PQntuples(res);
   std::vector<std::tuple<std::string, Oid, int>> fields(nfields);
 
-  for (size_t i = 0; i < nfields; i++) {
+  for (int i = 0; i < nfields; i++) {
     int attnum = atoi(PQgetvalue(res, i, 0));
     const char* attname = PQgetvalue(res, i, 1);
     Oid atttypid = atooid(PQgetvalue(res, i, 2));
