@@ -50,4 +50,5 @@ environment-pass = ["RUNNER_OS"]
 repair-wheel-command = "/opt/_internal/pipx/venvs/auditwheel/bin/python ci/linux/repair-wheel.py {wheel} {dest_dir}"
 
 [tool.cibuildwheel.windows]
+environment = { PGEON_TEST_DB='postgresql://localhost/postgres' }
 repair-wheel-command = "bash ci/windows/repair-wheel.sh {wheel} {dest_dir}"
