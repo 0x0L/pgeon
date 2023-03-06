@@ -4,6 +4,6 @@
 # in order to preload libarrow.so.*
 import pyarrow as _pa  # noqa
 
-from ._pgeon import copy_query
+from ._pgeon import UserOptions, copy_query
 
-__all__ = ["copy_query"]
+__all__ = ["UserOptions", "copy_query"]

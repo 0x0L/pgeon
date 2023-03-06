@@ -33,9 +33,8 @@ struct UserOptions {
   int default_numeric_scale = 6;
   int monetary_fractional_precision = 2;  // TODO(xav) lc_monetary
 
-  struct UserOptions static Defaults() {
-    return UserOptions();
-  }
+  static UserOptions Defaults();
+  arrow::Status Validate() const;
 };
 
 std::shared_ptr<arrow::Table> CopyQuery(

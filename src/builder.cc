@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 
+#include <arrow/api.h>
 #include "builder.h"
 
 #include "builder/common.h"
@@ -18,6 +19,9 @@
 namespace pgeon {
 
 using StringBuilder = GenericBuilder<arrow::StringBuilder, IdRecv>;
+// probably for xml json text
+// using LargeStringBuilder = GenericBuilder<arrow::LargeStringBuilder, IdRecv>;
+using StringDictionaryBuilder = GenericBuilder<arrow::StringDictionary32Builder, IdRecv>;
 
 using BooleanBuilder = GenericBuilder<arrow::BooleanBuilder, BoolRecv>;
 using Int32Builder = GenericBuilder<arrow::Int32Builder, Int4Recv>;
@@ -117,6 +121,13 @@ std::map<std::string,
 std::shared_ptr<ArrayBuilder> MakeBuilder(const SqlTypeInfo& info,
                                           const UserOptions& options) {
   bool found = gTypeMap.count(info.typreceive) > 0;
+  if (options.string_as_dictionaries) {
+    if ((info.typreceive == "bpcharrecv") || (info.typreceive == "varcharrecv") ||
+        (info.typreceive == "textrecv")) {
+      return make<StringDictionaryBuilder>(info, options);
+    }
+  }
+
   return found ? gTypeMap[info.typreceive](info, options)
                : make<BinaryBuilder>(info, options);
 }

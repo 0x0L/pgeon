@@ -9,6 +9,17 @@
 
 namespace pgeon {
 
+UserOptions UserOptions::Defaults() { return UserOptions(); }
+
+arrow::Status UserOptions::Validate() const {
+  if (ARROW_PREDICT_FALSE(default_numeric_precision < 1)) {
+    // Min is 1 because some tests use really small block sizes
+    return arrow::Status::Invalid("UserOptions: default_numeric_precision must be at least 1: ", default_numeric_precision);
+  }
+  // TODO
+  return arrow::Status::OK();
+}
+
 std::shared_ptr<arrow::Table> CopyQuery(const char* conninfo, const char* query,
                                         const UserOptions& options) {
   auto conn = PQconnectdb(conninfo);
