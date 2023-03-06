@@ -5,24 +5,19 @@
 
 namespace pgeon {
 
-inline size_t AppendFlatDoubleHelper(const char* buf, arrow::StructBuilder* ptr) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+inline arrow::Status AppendFlatDoubleHelper(StreamBuffer& sb, arrow::StructBuilder* ptr) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr->AppendNull();
-    return 4;
+    return ptr->AppendNull();
   }
 
   auto status = ptr->Append();
   for (int i = 0; i < ptr->num_children(); i++) {
-    double value = unpack_double(buf);
-    buf += 8;
-
-    auto status = ((arrow::DoubleBuilder*)ptr->child(i))->Append(value);
+    double value = Float8Recv::recv(sb);
+    status = ((arrow::DoubleBuilder*)ptr->child(i))->Append(value);
   }
 
-  return 4 + len;
+  return status;
 }
 
 PointBuilder::PointBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -35,7 +30,9 @@ PointBuilder::PointBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
 }
 
-size_t PointBuilder::Append(const char* buf) { return AppendFlatDoubleHelper(buf, ptr_); }
+arrow::Status PointBuilder::Append(StreamBuffer& sb) {
+  return AppendFlatDoubleHelper(sb, ptr_);
+}
 
 LineBuilder::LineBuilder(const SqlTypeInfo& info, const UserOptions&) {
   auto type = arrow::struct_({
@@ -48,7 +45,9 @@ LineBuilder::LineBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
 }
 
-size_t LineBuilder::Append(const char* buf) { return AppendFlatDoubleHelper(buf, ptr_); }
+arrow::Status LineBuilder::Append(StreamBuffer& sb) {
+  return AppendFlatDoubleHelper(sb, ptr_);
+}
 
 BoxBuilder::BoxBuilder(const SqlTypeInfo& info, const UserOptions&) {
   auto type = arrow::struct_({
@@ -62,7 +61,9 @@ BoxBuilder::BoxBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
 }
 
-size_t BoxBuilder::Append(const char* buf) { return AppendFlatDoubleHelper(buf, ptr_); }
+arrow::Status BoxBuilder::Append(StreamBuffer& sb) {
+  return AppendFlatDoubleHelper(sb, ptr_);
+}
 
 CircleBuilder::CircleBuilder(const SqlTypeInfo& info, const UserOptions&) {
   auto type = arrow::struct_({
@@ -75,8 +76,8 @@ CircleBuilder::CircleBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
 }
 
-size_t CircleBuilder::Append(const char* buf) {
-  return AppendFlatDoubleHelper(buf, ptr_);
+arrow::Status CircleBuilder::Append(StreamBuffer& sb) {
+  return AppendFlatDoubleHelper(sb, ptr_);
 }
 
 PathBuilder::PathBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -97,22 +98,17 @@ PathBuilder::PathBuilder(const SqlTypeInfo& info, const UserOptions&) {
   y_builder_ = (arrow::DoubleBuilder*)point_builder_->child(1);
 }
 
-size_t PathBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status PathBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
   auto status = ptr_->Append();
 
-  status = is_closed_builder_->Append(*buf != 0);
-  buf += 1;
+  status = is_closed_builder_->Append(BoolRecv::recv(sb));
 
-  int32_t npts = unpack_int32(buf);
-  buf += 4;
+  int32_t npts = sb.ReadInt32();
 
   // TODO(xav) could it be null ?
   status = point_list_builder_->Append();
@@ -120,15 +116,14 @@ size_t PathBuilder::Append(const char* buf) {
   for (int32_t i = 0; i < npts; i++) {
     status = point_builder_->Append();
 
-    double x = unpack_double(buf);
-    double y = unpack_double(buf + 8);
-    buf += 16;
+    double x = Float8Recv::recv(sb);
+    double y = Float8Recv::recv(sb);
 
     status = x_builder_->Append(x);
     status = y_builder_->Append(y);
   }
 
-  return 4 + len;
+  return status;
 }
 
 PolygonBuilder::PolygonBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -145,17 +140,13 @@ PolygonBuilder::PolygonBuilder(const SqlTypeInfo& info, const UserOptions&) {
   y_builder_ = (arrow::DoubleBuilder*)point_builder_->child(1);
 }
 
-size_t PolygonBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status PolygonBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
-  int32_t npts = unpack_int32(buf);
-  buf += 4;
+  int32_t npts = sb.ReadInt32();
 
   // TODO(xav) could it be null ?
   auto status = ptr_->Append();
@@ -163,15 +154,14 @@ size_t PolygonBuilder::Append(const char* buf) {
   for (int32_t i = 0; i < npts; i++) {
     status = point_builder_->Append();
 
-    double x = unpack_double(buf);
-    double y = unpack_double(buf + 8);
-    buf += 16;
+    double x = Float8Recv::recv(sb);
+    double y = Float8Recv::recv(sb);
 
     status = x_builder_->Append(x);
     status = y_builder_->Append(y);
   }
 
-  return 4 + len;
+  return status;
 }
 
 }  // namespace pgeon

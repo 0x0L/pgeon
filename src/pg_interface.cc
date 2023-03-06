@@ -153,19 +153,24 @@ void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> bu
 
   char* tuple;
 
-  auto status = PQgetCopyData(conn, &tuple, 0);
-  if (status > 0) {
+  arrow::Status status;
+  auto pg_status = PQgetCopyData(conn, &tuple, 0);
+  if (pg_status > 0) {
     const int kBinaryHeaderSize = 19;
-    builder_->Append(tuple + kBinaryHeaderSize);
+
+    StreamBuffer sb = StreamBuffer(tuple);
+    auto header = sb.ReadBinary(kBinaryHeaderSize);
+    status = builder_->Append(sb);
 
     PQfreemem(tuple);
   }
 
   while (true) {
-    status = PQgetCopyData(conn, &tuple, 0);
-    if (status < 0) break;
+    pg_status = PQgetCopyData(conn, &tuple, 0);
+    if (pg_status < 0) break;
 
-    builder_->Append(tuple);
+    StreamBuffer sb(tuple);
+    status = builder_->Append(sb);
     PQfreemem(tuple);
   }
 

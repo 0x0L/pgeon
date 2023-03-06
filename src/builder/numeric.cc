@@ -43,15 +43,13 @@ NumericBuilder::NumericBuilder(const SqlTypeInfo& info, const UserOptions& optio
   ptr_ = (arrow::Decimal128Builder*)arrow_builder_.get();
 }
 
-size_t NumericBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
+  const char* buf = sb.ReadBinary(len);
   auto rawdata = reinterpret_cast<const _NumericHelper*>(buf);
 
   int16_t ndigits = ntoh16(rawdata->ndigits);
@@ -63,8 +61,7 @@ size_t NumericBuilder::Append(const char* buf) {
   int16_t d, dig;
 
   if ((sign & NUMERIC_SIGN_MASK) == NUMERIC_NAN) {
-    auto status = ptr_->AppendNull();
-    return 4 + len;
+    return ptr_->AppendNull();
   }
 
   /* makes integer portion first */
@@ -95,9 +92,7 @@ size_t NumericBuilder::Append(const char* buf) {
   /* is it a negative value? */
   if ((sign & NUMERIC_NEG) != 0) value = -value;
 
-  auto status = ptr_->Append(value);
-
-  return 4 + len;
+  return ptr_->Append(value);
 }
 
 MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo& info, const UserOptions& options) {
@@ -109,20 +104,14 @@ MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo& info, const UserOptions& opt
   ptr_ = (arrow::Decimal128Builder*)arrow_builder_.get();
 }
 
-size_t MonetaryBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status MonetaryBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
-  arrow::Decimal128 value = unpack_int64(buf);
-  buf += 8;
-
-  auto status = ptr_->Append(value);
-  return 4 + len;
+  arrow::Decimal128 value = sb.ReadInt64();
+  return ptr_->Append(value);
 }
 
 }  // namespace pgeon

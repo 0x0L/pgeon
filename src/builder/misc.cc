@@ -10,12 +10,9 @@ NullBuilder::NullBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = reinterpret_cast<arrow::NullBuilder*>(arrow_builder_.get());
 }
 
-size_t NullBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
-  auto status = ptr_->AppendNull();
-  return 4 + len;
+arrow::Status NullBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
+  return ptr_->AppendNull();
 }
 
 TidBuilder::TidBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -31,25 +28,21 @@ TidBuilder::TidBuilder(const SqlTypeInfo& info, const UserOptions&) {
   offset_builder_ = (arrow::Int16Builder*)ptr_->child(1);
 }
 
-size_t TidBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status TidBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
   auto status = ptr_->Append();
 
-  int32_t block = unpack_int32(buf);
-  int32_t offset = unpack_int16(buf + 4);
-  buf += 6;
+  int32_t block = sb.ReadInt32();
+  int32_t offset = sb.ReadInt16();
 
   status = block_builder_->Append(block);
   status = offset_builder_->Append(offset);
 
-  return 4 + len;
+  return status;
 }
 
 PgSnapshotBuilder::PgSnapshotBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -66,35 +59,28 @@ PgSnapshotBuilder::PgSnapshotBuilder(const SqlTypeInfo& info, const UserOptions&
   value_builder_ = (arrow::Int64Builder*)xip_builder_->value_builder();
 }
 
-size_t PgSnapshotBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status PgSnapshotBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
   auto status = ptr_->Append();
   status = xip_builder_->Append();
 
-  int32_t nxip = unpack_int32(buf);
-  buf += 4;
-
-  int64_t xmin = unpack_int64(buf);
-  int64_t xmax = unpack_int64(buf + 8);
-  buf += 16;
+  int32_t nxip = sb.ReadInt32();
+  int64_t xmin = sb.ReadInt64();
+  int64_t xmax = sb.ReadInt64();
 
   status = xmin_builder_->Append(xmin);
   status = xmax_builder_->Append(xmax);
 
   for (int32_t i = 0; i < nxip; i++) {
-    int64_t xip = unpack_int64(buf);
-    buf += 8;
+    int64_t xip = sb.ReadInt64();
     status = value_builder_->Append(xip);
   }
 
-  return 4 + len;
+  return status;
 }
 
 }  // namespace pgeon

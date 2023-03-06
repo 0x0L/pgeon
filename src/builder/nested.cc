@@ -14,38 +14,30 @@ ListBuilder::ListBuilder(const SqlTypeInfo& info, const UserOptions&)
   ptr_ = (arrow::ListBuilder*)arrow_builder_.get();
 }
 
-size_t ListBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status ListBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
-  int32_t ndim = unpack_int32(buf);
-  buf += 4;
-  // int32_t hasnull = unpack_int32(buf);
-  buf += 4;
-  // int32_t element_type = unpack_int32(buf);
-  buf += 4;
+  int32_t ndim = sb.ReadInt32();
+  int32_t hasnull = sb.ReadInt32();
+  int32_t element_type = sb.ReadInt32();
 
   // Element will be flattened
   int32_t nitems = 1;
   for (int32_t i = 0; i < ndim; i++) {
-    int32_t dim = unpack_int32(buf);
-    buf += 4;
-    // int32_t lb = unpack_int32(buf);
-    buf += 4;
+    int32_t dim = sb.ReadInt32();
+    int32_t lb = sb.ReadInt32();
     nitems *= dim;
   }
 
   auto status = ptr_->Append();
   for (int32_t i = 0; i < nitems; i++) {
-    buf += value_builder_->Append(buf);
+    status = value_builder_->Append(sb);
   }
 
-  return 4 + len;
+  return status;
 }
 
 StructBuilder::StructBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -66,29 +58,23 @@ StructBuilder::StructBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
 }
 
-size_t StructBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status StructBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
   auto status = ptr_->Append();
 
-  int32_t validcols = unpack_int32(buf);
+  int32_t validcols = sb.ReadInt32();
   assert(validcols == ncolumns_);
-  buf += 4;
 
   for (size_t i = 0; i < ncolumns_; i++) {
-    // int32_t column_type = unpack_int32(buf);
-    buf += 4;
-
-    buf += builders_[i]->Append(buf);
+    int32_t column_type = sb.ReadInt32();
+    status = builders_[i]->Append(sb);
   }
 
-  return 4 + len;
+  return status;
 }
 
 }  // namespace pgeon

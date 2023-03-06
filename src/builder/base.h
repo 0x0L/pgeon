@@ -2,8 +2,9 @@
 
 #pragma once
 
-#include <arrow/api.h>
 #include <pgeon.h>
+
+#include "util/streambuffer.h"
 
 #include <map>
 #include <memory>
@@ -21,7 +22,7 @@ class ArrayBuilder {
   // General format of a field is
   // int32 length
   // char[length] content if length > -1
-  virtual size_t Append(const char* buffer) = 0;
+  virtual arrow::Status Append(StreamBuffer& sb) = 0;
 
   std::shared_ptr<arrow::DataType> type() { return arrow_builder_->type(); }
 

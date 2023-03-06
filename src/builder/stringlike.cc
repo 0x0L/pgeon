@@ -25,18 +25,16 @@ BinaryBuilder::BinaryBuilder(const SqlTypeInfo& info, const UserOptions&) {
   }
 }
 
-size_t BinaryBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status BinaryBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
-  auto status = binary_ptr_ != nullptr ? binary_ptr_->Append(buf, len)
-                                       : fixed_size_binary_ptr_->Append(buf);
-  return 4 + len;
+  auto value = sb.ReadBinary(len);
+  auto status = binary_ptr_ != nullptr ? binary_ptr_->Append(value, len)
+                                       : fixed_size_binary_ptr_->Append(value);
+  return status;
 }
 
 JsonbBuilder::JsonbBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -44,17 +42,14 @@ JsonbBuilder::JsonbBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = reinterpret_cast<arrow::StringBuilder*>(arrow_builder_.get());
 }
 
-size_t JsonbBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status JsonbBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
-  auto status = ptr_->Append(buf + 1, len);
-  return 4 + len;
+  const char* buf = sb.ReadBinary(len);
+  return ptr_->Append(buf + 1, len - 1);
 }
 
 HstoreBuilder::HstoreBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -67,40 +62,32 @@ HstoreBuilder::HstoreBuilder(const SqlTypeInfo& info, const UserOptions&) {
   item_builder_ = (arrow::StringBuilder*)ptr_->item_builder();
 }
 
-size_t HstoreBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status HstoreBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
   auto status = ptr_->Append();
 
-  int32_t pcount = unpack_int32(buf);
-  buf += 4;
-
+  int32_t pcount = sb.ReadInt32();
   int32_t flen;
   for (int32_t i = 0; i < pcount; i++) {
-    flen = unpack_int32(buf);
-    buf += 4;
+    flen = sb.ReadInt32();
 
-    status = key_builder_->Append(buf, flen);
-    buf += flen;
+    auto value = sb.ReadBinary(flen);
+    status = key_builder_->Append(value, flen);
 
-    flen = unpack_int32(buf);
-    buf += 4;
-
+    flen = sb.ReadInt32();
     if (flen > -1) {
-      status = item_builder_->Append(buf, flen);
-      buf += flen;
+      auto value = sb.ReadBinary(flen);
+      status = item_builder_->Append(value, flen);
     } else {
       status = item_builder_->AppendNull();
     }
   }
 
-  return 4 + len;
+  return status;
 }
 
 }  // namespace pgeon

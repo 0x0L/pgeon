@@ -16,26 +16,16 @@ TableBuilder::TableBuilder(const FieldVector& fields) : fields_(fields) {
   // fields_offsets_ = std::vector<int32_t>(fields.size(), 0);
 }
 
-int32_t TableBuilder::Append(const char* cursor) {
-  const char* cur = cursor;
-  int16_t nfields = unpack_int16(cur);
-  cur += 2;
+arrow::Status TableBuilder::Append(StreamBuffer& sb) {
+  int16_t nfields = sb.ReadInt16();
 
-  if (nfields == -1) return 2;
+  if (nfields == -1) return arrow::Status::OK();
 
-  // const char* cur2 = cur;
-  // for (int16_t i = 1; i < nfields; i++)
-  // {
-  //     cur2 += unpack_int32(cur2) + 4;
-  //     fields_offsets_[i] = cur2 - cur;
-  // }
-
-  // #pragma omp parallel for
+  arrow::Status status;
   for (int16_t i = 0; i < nfields; i++) {
-    cur += builders_[i]->Append(cur);
-    // builders_[i]->Append(cur + fields_offsets_[i]);
+    status = builders_[i]->Append(sb);
   }
-  return cur - cursor;
+  return status;
 }
 
 std::shared_ptr<arrow::Table> TableBuilder::Flush() {

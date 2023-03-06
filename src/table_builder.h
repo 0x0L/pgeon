@@ -14,12 +14,11 @@ class TableBuilder {
   FieldVector fields_;
   std::vector<ArrayBuilder*> builders_;
   std::shared_ptr<arrow::Schema> schema_;
-  // std::vector<int32_t> fields_offsets_;  // omp tentative
 
  public:
-  explicit TableBuilder(const FieldVector& fields);
+  explicit TableBuilder(const FieldVector&);
 
-  int32_t Append(const char* cursor);
+  arrow::Status Append(StreamBuffer&);
 
   std::shared_ptr<arrow::Table> Flush();
 };

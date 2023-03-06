@@ -18,10 +18,10 @@
 
 namespace pgeon {
 
-using StringBuilder = GenericBuilder<arrow::StringBuilder, IdRecv>;
+using StringBuilder = GenericBuilder<arrow::StringBuilder, BinaryRecv>;
 // probably for xml json text
-// using LargeStringBuilder = GenericBuilder<arrow::LargeStringBuilder, IdRecv>;
-using StringDictionaryBuilder = GenericBuilder<arrow::StringDictionary32Builder, IdRecv>;
+// using LargeStringBuilder = GenericBuilder<arrow::LargeStringBuilder, BinaryRecv>;
+using StringDictionaryBuilder = GenericBuilder<arrow::StringDictionary32Builder, BinaryRecv>;
 
 using BooleanBuilder = GenericBuilder<arrow::BooleanBuilder, BoolRecv>;
 using Int32Builder = GenericBuilder<arrow::Int32Builder, Int4Recv>;
@@ -57,7 +57,7 @@ std::map<std::string,
         {"date_recv", &make<GenericBuilder<arrow::Date32Builder, DateRecv>>},
         // TODO(xav) this probably needs to get done in MakeBuilder
         // {"domain_recv", &make<Builder>},
-        {"enum_recv", &make<GenericBuilder<arrow::StringDictionary32Builder, IdRecv>>},
+        {"enum_recv", &make<StringDictionaryBuilder>},
         {"float4recv", &make<FloatBuilder>},
         {"float8recv", &make<DoubleBuilder>},
         {"hstore_recv", &make<HstoreBuilder>},
@@ -120,7 +120,6 @@ std::map<std::string,
 
 std::shared_ptr<ArrayBuilder> MakeBuilder(const SqlTypeInfo& info,
                                           const UserOptions& options) {
-  bool found = gTypeMap.count(info.typreceive) > 0;
   if (options.string_as_dictionaries) {
     if ((info.typreceive == "bpcharrecv") || (info.typreceive == "varcharrecv") ||
         (info.typreceive == "textrecv")) {
@@ -128,6 +127,7 @@ std::shared_ptr<ArrayBuilder> MakeBuilder(const SqlTypeInfo& info,
     }
   }
 
+  bool found = gTypeMap.count(info.typreceive) > 0;
   return found ? gTypeMap[info.typreceive](info, options)
                : make<BinaryBuilder>(info, options);
 }

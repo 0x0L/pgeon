@@ -22,32 +22,25 @@ InetBuilder::InetBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ipaddr_builder_ = (arrow::BinaryBuilder*)ptr_->child(3);
 }
 
-size_t InetBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status InetBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
   auto status = ptr_->Append();
 
-  status = family_builder_->Append(*buf);
-  buf += 1;
+  status = family_builder_->Append(sb.ReadUInt8());
+  status = bits_builder_->Append(sb.ReadUInt8());
+  status = is_cidr_builder_->Append(sb.ReadUInt8() != 0);
+  int8_t nb = sb.ReadUInt8();
 
-  status = bits_builder_->Append(*buf);
-  buf += 1;
+  if (nb > -1) {
+    auto value = sb.ReadBinary(nb);
+    status = ipaddr_builder_->Append(value, nb);
+  }
 
-  status = is_cidr_builder_->Append(*buf != 0);
-  buf += 1;
-
-  int8_t nb = *buf;
-  buf += 1;
-
-  if (nb > -1) status = ipaddr_builder_->Append(buf, nb);
-
-  return 4 + len;
+  return status;
 }
 
 }  // namespace pgeon

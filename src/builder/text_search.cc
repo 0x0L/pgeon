@@ -18,43 +18,38 @@ TsVectorBuilder::TsVectorBuilder(const SqlTypeInfo& info, const UserOptions&) {
   value_builder_ = (arrow::Int32Builder*)item_builder_->value_builder();
 }
 
-size_t TsVectorBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status TsVectorBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
   auto status = ptr_->Append();
 
-  int32_t size = unpack_int32(buf);
-
-  buf += 4;
+  int32_t size = sb.ReadInt32();
 
   int16_t npos;
   for (int32_t i = 0; i < size; i++) {
+    const char* buf = sb.ReadBinary(1);
+    const char* start_buf = buf;
     int16_t flen = 0;
-    while (*(buf + flen) != '\0') flen++;
+    while (*buf != '\0') {
+      flen += 1;
+      buf = sb.ReadBinary(1);
+    }
 
-    status = key_builder_->Append(buf, flen);
-    buf += flen + 1;
+    status = key_builder_->Append(start_buf, flen);
 
     status = item_builder_->Append();
 
-    npos = unpack_int16(buf);
-    buf += 2;
-
+    npos = sb.ReadInt16();
     for (int16_t j = 0; j < npos; j++) {
-      int16_t pos = unpack_int16(buf);
-      buf += 2;
-
+      int16_t pos = sb.ReadInt16();
       status = value_builder_->Append(pos);
     }
   }
 
-  return 4 + len;
+  return status;
 }
 
 #define QI_VAL 1
@@ -89,48 +84,45 @@ TsQueryBuilder::TsQueryBuilder(const SqlTypeInfo& info, const UserOptions&) {
   distance_builder_ = (arrow::Int16Builder*)value_builder_->child(5);
 }
 
-size_t TsQueryBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status TsQueryBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
   auto status = ptr_->Append();
 
-  int32_t size = unpack_int32(buf);
-  buf += 4;
-
+  int32_t size = sb.ReadInt32();
   int16_t npos;
   for (int32_t i = 0; i < size; i++) {
     status = value_builder_->Append();
 
-    int8_t type = *buf;
-    buf += 1;
+    int8_t type = sb.ReadUInt8();
 
     switch (type) {
       case QI_VAL: {
-        int8_t weight = *buf;
-        int8_t prefix = *buf + 1;
-        buf += 2;
+        int8_t weight = sb.ReadUInt8();
+        int8_t prefix = sb.ReadUInt8();
 
+        const char* buf = sb.ReadBinary(1);
+        const char* start_buf = buf;
         int16_t flen = 0;
-        while (*(buf + flen) != '\0') flen++;
+        while (*buf != '\0') {
+          flen += 1;
+          buf = sb.ReadBinary(1);
+        }
 
         status = type_builder_->Append(type);
         status = weight_builder_->Append(weight);
         status = prefix_builder_->Append(prefix);
-        status = operand_builder_->Append(buf, flen);  // TODO(xav)
+        status = operand_builder_->Append(start_buf, flen);  // TODO(xav)
         status = oper_builder_->AppendNull();
         status = distance_builder_->AppendNull();
         buf += flen + 1;
       } break;
 
       case QI_OPR: {
-        int8_t oper = *buf;
-        buf += 1;
+        int8_t oper = sb.ReadUInt8();
 
         status = type_builder_->Append(type);
         status = weight_builder_->AppendNull();
@@ -139,9 +131,7 @@ size_t TsQueryBuilder::Append(const char* buf) {
         status = oper_builder_->Append(oper);
 
         if (oper == OP_PHRASE) {
-          int16_t distance = unpack_int16(buf);
-          buf += 2;
-
+          int16_t distance = sb.ReadInt16();
           status = distance_builder_->Append(distance);
         } else {
           status = distance_builder_->AppendNull();
@@ -159,7 +149,7 @@ size_t TsQueryBuilder::Append(const char* buf) {
     }
   }
 
-  return 4 + len;
+  return status;
 }
 
 }  // namespace pgeon
