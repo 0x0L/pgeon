@@ -55,7 +55,7 @@ arrow::Status TsVectorBuilder::Append(StreamBuffer& sb) {
 #define OP_COUNT
 
 TsQueryBuilder::TsQueryBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::list(arrow::struct_({
+  static const auto& type = arrow::list(arrow::struct_({
       arrow::field("type", arrow::int8()),
       arrow::field("weight", arrow::int8()),
       arrow::field("prefix", arrow::int8()),

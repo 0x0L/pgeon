@@ -29,9 +29,11 @@ namespace pgeon {
 
 struct UserOptions {
   bool string_as_dictionaries = false;
-  int default_numeric_precision = 22;  // TODO(xav) max precision of 128 decimal ?
+  // TODO(xav) max precision of 128 decimal ?
+  int default_numeric_precision = 22;
   int default_numeric_scale = 6;
-  int monetary_fractional_precision = 2;  // TODO(xav) lc_monetary
+  // TODO(xav) lc_monetary
+  int monetary_fractional_precision = 2;
 
   static UserOptions Defaults();
   arrow::Status Validate() const;

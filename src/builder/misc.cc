@@ -16,7 +16,7 @@ arrow::Status NullBuilder::Append(StreamBuffer& sb) {
 }
 
 TidBuilder::TidBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::struct_({
+  static const auto& type = arrow::struct_({
       arrow::field("block", arrow::int32()),
       arrow::field("offset", arrow::int16()),
   });
@@ -35,9 +35,9 @@ arrow::Status TidBuilder::Append(StreamBuffer& sb) {
 }
 
 PgSnapshotBuilder::PgSnapshotBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::struct_({arrow::field("xmin", arrow::int64()),
-                              arrow::field("xmax", arrow::int64()),
-                              arrow::field("xip", arrow::list(arrow::int64()))});
+  static const auto& type = arrow::struct_(
+      {arrow::field("xmin", arrow::int64()), arrow::field("xmax", arrow::int64()),
+       arrow::field("xip", arrow::list(arrow::int64()))});
 
   auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
   ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());

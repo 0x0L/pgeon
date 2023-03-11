@@ -40,13 +40,13 @@ cdef class UserOptions(_Weakrefable):
         Whether to treat string columns as dictionaries
 
     default_numeric_precision : int, optional (default 22)
-        TODO
+        Default precision for numeric type
 
     default_numeric_scale : bool, optional (default 6)
-        TODO
+        Default scale for numeric type
 
     monetary_fractional_precision : bool, optional (default 2)
-        TODO
+        Default monetary precision
     """
     cdef:
         unique_ptr[CUserOptions] options
@@ -82,7 +82,7 @@ cdef class UserOptions(_Weakrefable):
     @property
     def default_numeric_precision(self):
         """
-        TODO
+        Default precision for numeric type
         """
         return deref(self.options).default_numeric_precision
 
@@ -93,7 +93,7 @@ cdef class UserOptions(_Weakrefable):
     @property
     def default_numeric_scale(self):
         """
-        TODO
+        Default scale for numeric type
         """
         return deref(self.options).default_numeric_scale
 
@@ -104,7 +104,7 @@ cdef class UserOptions(_Weakrefable):
     @property
     def monetary_fractional_precision(self):
         """
-        TODO
+        Default monetary precision
         """
         return deref(self.options).monetary_fractional_precision
 

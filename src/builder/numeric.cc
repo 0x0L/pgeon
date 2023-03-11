@@ -66,7 +66,7 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
   for (d = 0; d <= weight; d++) {
     dig = (d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
     if (dig < 0 || dig >= NBASE)
-      return arrow::Status::ExecutionError("[numeric] digit is out of range");
+      return arrow::Status::IOError("[numeric] digit is out of range");
     value = NBASE * value + dig;
   }
 
@@ -74,7 +74,7 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
   while (scale > 0) {
     dig = (d >= 0 && d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
     if (dig < 0 || dig >= NBASE)
-      return arrow::Status::ExecutionError("[numeric] digit is out of range");
+      return arrow::Status::IOError("[numeric] digit is out of range");
 
     if (scale >= DEC_DIGITS)
       value = NBASE * value + dig;
@@ -85,7 +85,7 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
     else if (scale == 1)
       value = 10L * value + dig / 1000L;
     else
-      return arrow::Status::ExecutionError("[numeric] Unexpected error while parsing");
+      return arrow::Status::IOError("[numeric] Unexpected error while parsing");
     scale -= DEC_DIGITS;
     d++;
   }

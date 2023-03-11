@@ -8,9 +8,8 @@
 namespace pgeon {
 
 TimeBuilder::TimeBuilder(const SqlTypeInfo&, const UserOptions&) {
-  auto status =
-      arrow::MakeBuilder(arrow::default_memory_pool(),
-                         arrow::time64(arrow::TimeUnit::MICRO), &arrow_builder_);
+  arrow_builder_ = std::make_unique<arrow::Time64Builder>(
+      arrow::time64(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
   ptr_ = reinterpret_cast<arrow::Time64Builder*>(arrow_builder_.get());
 }
 
@@ -20,9 +19,8 @@ arrow::Status TimeBuilder::Append(StreamBuffer& sb) {
 }
 
 TimeTzBuilder::TimeTzBuilder(const SqlTypeInfo&, const UserOptions&) {
-  auto status =
-      arrow::MakeBuilder(arrow::default_memory_pool(),
-                         arrow::time64(arrow::TimeUnit::MICRO), &arrow_builder_);
+  arrow_builder_ = std::make_unique<arrow::Time64Builder>(
+      arrow::time64(arrow::TimeUnit::MICRO), arrow::default_memory_pool());
   ptr_ = reinterpret_cast<arrow::Time64Builder*>(arrow_builder_.get());
 }
 
@@ -38,7 +36,8 @@ TimestampBuilder::TimestampBuilder(const SqlTypeInfo& info, const UserOptions&) 
   if (info.typreceive == "timestamptz_recv")
     type = arrow::timestamp(arrow::TimeUnit::MICRO, "utc");
 
-  auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
+  arrow_builder_ =
+      std::make_unique<arrow::TimestampBuilder>(type, arrow::default_memory_pool());
   ptr_ = reinterpret_cast<arrow::TimestampBuilder*>(arrow_builder_.get());
 }
 
@@ -49,8 +48,8 @@ arrow::Status TimestampBuilder::Append(StreamBuffer& sb) {
 }
 
 IntervalBuilder::IntervalBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto status = arrow::MakeBuilder(arrow::default_memory_pool(),
-                                   arrow::month_day_nano_interval(), &arrow_builder_);
+  arrow_builder_ =
+      std::make_unique<arrow::MonthDayNanoIntervalBuilder>(arrow::default_memory_pool());
   ptr_ = reinterpret_cast<arrow::MonthDayNanoIntervalBuilder*>(arrow_builder_.get());
 }
 

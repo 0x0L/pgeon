@@ -6,7 +6,7 @@
 namespace pgeon {
 
 InetBuilder::InetBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::struct_({
+  static const auto& type = arrow::struct_({
       arrow::field("family", arrow::uint8()),
       arrow::field("bits", arrow::uint8()),
       arrow::field("is_cidr", arrow::boolean()),

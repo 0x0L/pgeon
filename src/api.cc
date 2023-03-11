@@ -13,12 +13,21 @@ UserOptions UserOptions::Defaults() { return UserOptions(); }
 
 arrow::Status UserOptions::Validate() const {
   if (default_numeric_precision < 1) {
-    // Min is 1 because some tests use really small block sizes
     return arrow::Status::Invalid(
-        "UserOptions: default_numeric_precision must be at least 1",
+        "UserOptions: default_numeric_precision must be at least 1, got ",
         std::to_string(default_numeric_precision));
   }
-  // TODO
+  if (default_numeric_scale >= default_numeric_precision) {
+    return arrow::Status::Invalid(
+        "UserOptions: default_numeric_scale must be smaller than "
+        "default_numeric_precision, got ",
+        std::to_string(default_numeric_scale));
+  }
+  if (monetary_fractional_precision < 1) {
+    return arrow::Status::Invalid(
+        "UserOptions: monetary_fractional_precision must be at least 1, got ",
+        std::to_string(monetary_fractional_precision));
+  }
   return arrow::Status::OK();
 }
 

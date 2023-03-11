@@ -16,7 +16,7 @@ inline arrow::Status AppendFlatDoubleHelper(StreamBuffer& sb, arrow::StructBuild
 }
 
 PointBuilder::PointBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::struct_({
+  static const auto& type = arrow::struct_({
       arrow::field("x", arrow::float64()),
       arrow::field("y", arrow::float64()),
   });
@@ -30,7 +30,7 @@ arrow::Status PointBuilder::Append(StreamBuffer& sb) {
 }
 
 LineBuilder::LineBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::struct_({
+  static const auto& type = arrow::struct_({
       arrow::field("A", arrow::float64()),
       arrow::field("B", arrow::float64()),
       arrow::field("C", arrow::float64()),
@@ -45,7 +45,7 @@ arrow::Status LineBuilder::Append(StreamBuffer& sb) {
 }
 
 BoxBuilder::BoxBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::struct_({
+  static const auto& type = arrow::struct_({
       arrow::field("x1", arrow::float64()),
       arrow::field("y1", arrow::float64()),
       arrow::field("x2", arrow::float64()),
@@ -61,7 +61,7 @@ arrow::Status BoxBuilder::Append(StreamBuffer& sb) {
 }
 
 CircleBuilder::CircleBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::struct_({
+  static const auto& type = arrow::struct_({
       arrow::field("x", arrow::float64()),
       arrow::field("y", arrow::float64()),
       arrow::field("r", arrow::float64()),
@@ -76,7 +76,7 @@ arrow::Status CircleBuilder::Append(StreamBuffer& sb) {
 }
 
 PathBuilder::PathBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type =
+  static const auto& type =
       arrow::struct_({arrow::field("closed", arrow::boolean()),
                       arrow::field("points", arrow::list(arrow::struct_({
                                                  arrow::field("x", arrow::float64()),
@@ -109,7 +109,7 @@ arrow::Status PathBuilder::Append(StreamBuffer& sb) {
 }
 
 PolygonBuilder::PolygonBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::list(arrow::struct_({
+  static const auto& type = arrow::list(arrow::struct_({
       arrow::field("x", arrow::float64()),
       arrow::field("y", arrow::float64()),
   }));
