@@ -56,7 +56,7 @@ std::map<std::string,
         {"circle_recv", &make<CircleBuilder>},
         {"cstring_recv", &make<BinaryBuilder>},
         {"date_recv", &make<GenericBuilder<arrow::Date32Builder, DateRecv>>},
-        // TODO(xav) this probably needs to get done in MakeBuilder
+        // TODO this probably needs to get done in MakeBuilder
         // {"domain_recv", &make<Builder>},
         {"enum_recv", &make<StringDictionaryBuilder>},
         {"float4recv", &make<FloatBuilder>},

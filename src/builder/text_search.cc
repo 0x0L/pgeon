@@ -101,7 +101,7 @@ arrow::Status TsQueryBuilder::Append(StreamBuffer& sb) {
         ARROW_RETURN_NOT_OK(type_builder_->Append(type));
         ARROW_RETURN_NOT_OK(weight_builder_->Append(weight));
         ARROW_RETURN_NOT_OK(prefix_builder_->Append(prefix));
-        ARROW_RETURN_NOT_OK(operand_builder_->Append(start_buf, flen));  // TODO(xav)
+        ARROW_RETURN_NOT_OK(operand_builder_->Append(start_buf, flen));  // TODO
         ARROW_RETURN_NOT_OK(oper_builder_->AppendNull());
         ARROW_RETURN_NOT_OK(distance_builder_->AppendNull());
 

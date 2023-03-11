@@ -29,10 +29,10 @@ namespace pgeon {
 
 struct UserOptions {
   bool string_as_dictionaries = false;
-  // TODO(xav) max precision of 128 decimal ?
+  // TODO max precision of 128 decimal ?
   int default_numeric_precision = 22;
   int default_numeric_scale = 6;
-  // TODO(xav) lc_monetary
+  // TODO lc_monetary
   int monetary_fractional_precision = 2;
 
   static UserOptions Defaults();

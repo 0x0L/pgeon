@@ -12,7 +12,7 @@ from pyarrow.lib cimport (
 
 import pyarrow
 
-cdef extern from "pgeon.h" namespace "pgeon":
+cdef extern from "pgeon.h" namespace "pgeon" nogil:
     cdef cppclass CUserOptions" pgeon::UserOptions":
         c_bool string_as_dictionaries
         int default_numeric_precision
@@ -28,7 +28,7 @@ cdef extern from "pgeon.h" namespace "pgeon":
         CStatus Validate()
 
     cdef CResult[shared_ptr[CTable]] CopyQuery(
-        const char* conninfo, const char* query, CUserOptions options) nogil
+        const char* conninfo, const char* query, CUserOptions options)
 
 
 cdef class UserOptions(_Weakrefable):
@@ -67,6 +67,15 @@ cdef class UserOptions(_Weakrefable):
             self.default_numeric_scale = default_numeric_scale
         if monetary_fractional_precision is not None:
             self.monetary_fractional_precision = monetary_fractional_precision
+
+    def __repr__(self) -> str:
+        return (
+            "pgeon.UserOptions<string_as_dictionaries={} default_numeric_precision={} "
+            "default_numeric_scale={} monetary_fractional_precision={}>".format(
+                self.string_as_dictionaries, self.default_numeric_precision,
+                self.default_numeric_scale, self.monetary_fractional_precision
+            )
+        )
 
     @property
     def string_as_dictionaries(self):
@@ -161,6 +170,9 @@ def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> p
 
     query : str
         The SQL query
+
+    user_options : UserOptions, optional
+        User options
 
     Returns
     -------
