@@ -18,8 +18,8 @@ class InetBuilder : public ArrayBuilder {
   arrow::BinaryBuilder* ipaddr_builder_;
 
  public:
-  InetBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  InetBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 }  // namespace pgeon

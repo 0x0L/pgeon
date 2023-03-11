@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "./endianness.h"
+#include "util/endianness.h"
 
 static inline void pack_int16(char* buf, int16_t x) {
   uint16_t nx = hton16((uint16_t)x);

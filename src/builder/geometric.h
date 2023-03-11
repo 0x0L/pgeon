@@ -14,8 +14,8 @@ class PointBuilder : public ArrayBuilder {
   arrow::StructBuilder* ptr_;
 
  public:
-  PointBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  PointBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class LineBuilder : public ArrayBuilder {
@@ -23,8 +23,8 @@ class LineBuilder : public ArrayBuilder {
   arrow::StructBuilder* ptr_;
 
  public:
-  LineBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  LineBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class BoxBuilder : public ArrayBuilder {
@@ -32,8 +32,8 @@ class BoxBuilder : public ArrayBuilder {
   arrow::StructBuilder* ptr_;
 
  public:
-  BoxBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  BoxBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class CircleBuilder : public ArrayBuilder {
@@ -41,8 +41,8 @@ class CircleBuilder : public ArrayBuilder {
   arrow::StructBuilder* ptr_;
 
  public:
-  CircleBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  CircleBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class PathBuilder : public ArrayBuilder {
@@ -55,8 +55,8 @@ class PathBuilder : public ArrayBuilder {
   arrow::DoubleBuilder* y_builder_;
 
  public:
-  PathBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  PathBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class PolygonBuilder : public ArrayBuilder {
@@ -67,8 +67,8 @@ class PolygonBuilder : public ArrayBuilder {
   arrow::DoubleBuilder* y_builder_;
 
  public:
-  PolygonBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  PolygonBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 }  // namespace pgeon

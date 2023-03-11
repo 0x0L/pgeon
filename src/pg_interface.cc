@@ -14,13 +14,16 @@ namespace pgeon {
 
 using ColumnVector = std::vector<std::tuple<std::string, Oid, int>>;
 
-ColumnVector ColumnTypesForQuery(PGconn* conn, const char* query) {
-  const auto descr_query = "SELECT * FROM (" + std::string(query) + ") AS FOO LIMIT 0;";
-  PGresult* res = PQexec(conn, descr_query.c_str());
+arrow::Result<std::shared_ptr<ColumnVector>> ColumnTypesForQuery(PGconn* conn,
+                                                                 const char* query) {
+  auto descr_query =
+      arrow::util::StringBuilder("SELECT * FROM (", query, ") AS foo LIMIT 0;");
 
+  PGresult* res = PQexec(conn, descr_query.c_str());
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    std::cout << "error in ColumnTypesForQuery (query " << query
-              << "): " << PQresultErrorMessage(res) << std::endl;
+    auto status = arrow::Status::IOError("[libpq] ", PQresultErrorMessage(res));
+    PQclear(res);
+    return status;
   }
 
   int n = PQnfields(res);
@@ -35,30 +38,21 @@ ColumnVector ColumnTypesForQuery(PGconn* conn, const char* query) {
   }
 
   PQclear(res);
-  return fields;
+  return std::make_shared<ColumnVector>(fields);
 }
 
-ColumnVector RecordTypeInfo(PGconn* conn, Oid oid) {
-  char query[4096];
-  snprintf(query, sizeof(query), R"(
-SELECT
-    attnum, attname, atttypid, atttypmod
-FROM
-    pg_catalog.pg_attribute a,
-    pg_catalog.pg_type t,
-    pg_catalog.pg_namespace n
-WHERE
-    t.typnamespace = n.oid
-    AND a.atttypid = t.oid
-    AND a.attrelid = %u
-;)",
-           oid);
+arrow::Result<std::shared_ptr<ColumnVector>> RecordTypeInfo(PGconn* conn, Oid oid) {
+  auto query = arrow::util::StringBuilder(
+      "SELECT attnum, attname, atttypid, atttypmod ",
+      "FROM pg_catalog.pg_attribute a, pg_catalog.pg_type t, pg_catalog.pg_namespace n ",
+      "WHERE t.typnamespace = n.oid AND a.atttypid = t.oid AND a.attrelid = ",
+      std::to_string(oid), ";");
 
-  auto res = PQexec(conn, query);
-
+  auto res = PQexec(conn, query.c_str());
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    std::cout << "error in RecordTypeInfo (Oid " << oid
-              << "): " << PQresultErrorMessage(res) << std::endl;
+    auto status = arrow::Status::IOError("[libpq] ", PQresultErrorMessage(res));
+    PQclear(res);
+    return status;
   }
 
   int nfields = PQntuples(res);
@@ -74,29 +68,21 @@ WHERE
   }
 
   PQclear(res);
-  return fields;
+  return std::make_shared<ColumnVector>(fields);
 }
 
-std::shared_ptr<ArrayBuilder> MakeColumnBuilder(PGconn* conn, Oid oid, int mod,
-                                                const UserOptions& options) {
-  char query[4096];
-  snprintf(query, sizeof(query), R"(
-SELECT
-    typreceive, typelem, typrelid, typlen
-FROM
-    pg_catalog.pg_type t,
-    pg_catalog.pg_namespace n
-WHERE
-    t.typnamespace = n.oid
-    AND t.oid = %u
-;)",
-           oid);
+arrow::Result<std::shared_ptr<ArrayBuilder>> MakeColumnBuilder(
+    PGconn* conn, Oid oid, int mod, const UserOptions& options) {
+  auto query = arrow::util::StringBuilder(
+      "SELECT typreceive, typelem, typrelid, typlen ",
+      "FROM pg_catalog.pg_type t, pg_catalog.pg_namespace n ",
+      "WHERE t.typnamespace = n.oid AND t.oid = ", std::to_string(oid), ";");
 
-  auto res = PQexec(conn, query);
-
+  auto res = PQexec(conn, query.c_str());
   if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-    std::cout << "error in MakeColumnBuilder (Oid " << oid
-              << "): " << PQresultErrorMessage(res) << std::endl;
+    auto status = arrow::Status::IOError("[libpq] ", PQresultErrorMessage(res));
+    PQclear(res);
+    return status;
   }
 
   if (PQntuples(res) == 0) {
@@ -109,20 +95,24 @@ WHERE
   Oid typelem = atooid(PQgetvalue(res, 0, 1));
   Oid typrelid = atooid(PQgetvalue(res, 0, 2));
   int typlen = atoi(PQgetvalue(res, 0, 3));
+  PQclear(res);
 
   SqlTypeInfo sql_info{.typreceive = typreceive, .typmod = mod, .typlen = typlen};
 
-  PQclear(res);
-
+  std::shared_ptr<ArrayBuilder> builder;
   if (typreceive == "anyarray_recv" || typreceive == "anycompatiblearray_recv" ||
       typreceive == "array_recv") {
-    sql_info.value_builder = MakeColumnBuilder(conn, typelem, mod, options);
+    ARROW_ASSIGN_OR_RAISE(builder, MakeColumnBuilder(conn, typelem, mod, options));
+    sql_info.value_builder = builder;
   } else if (typreceive == "record_recv") {
-    auto fields_info = RecordTypeInfo(conn, typrelid);
+    std::shared_ptr<ColumnVector> fields_info;
+    ARROW_ASSIGN_OR_RAISE(fields_info, RecordTypeInfo(conn, typrelid));
+
     FieldVector fields;
-    for (size_t i = 0; i < fields_info.size(); i++) {
-      auto [name, oid, mod] = fields_info[i];
-      fields.push_back({name, MakeColumnBuilder(conn, oid, mod, options)});
+    for (size_t i = 0; i < fields_info->size(); i++) {
+      auto [name, oid, mod] = (*fields_info)[i];
+      ARROW_ASSIGN_OR_RAISE(builder, MakeColumnBuilder(conn, oid, mod, options));
+      fields.push_back({name, builder});
     }
     sql_info.field_builders = fields;
   }
@@ -130,52 +120,81 @@ WHERE
   return MakeBuilder(sql_info, options);
 }
 
-std::shared_ptr<TableBuilder> MakeTableBuilder(PGconn* conn, const char* query,
-                                               const UserOptions& options) {
-  auto columns = ColumnTypesForQuery(conn, query);
+arrow::Result<std::shared_ptr<TableBuilder>> MakeTableBuilder(
+    PGconn* conn, const char* query, const UserOptions& options) {
+  std::shared_ptr<ColumnVector> columns;
+  ARROW_ASSIGN_OR_RAISE(columns, ColumnTypesForQuery(conn, query));
+
   FieldVector fields;
-  for (auto& [name, oid, mod] : columns) {
-    auto builder = MakeColumnBuilder(conn, oid, mod, options);
+  std::shared_ptr<ArrayBuilder> builder;
+  for (auto& [name, oid, mod] : *columns) {
+    ARROW_ASSIGN_OR_RAISE(builder, MakeColumnBuilder(conn, oid, mod, options));
     fields.push_back({name, builder});
   }
   return std::make_shared<TableBuilder>(fields);
 }
 
-void CopyQuery(PGconn* conn, const char* query, std::shared_ptr<TableBuilder> builder) {
-  auto copy_query = std::string("COPY (") + query + ") TO STDOUT (FORMAT binary)";
-  auto res = PQexec(conn, copy_query.c_str());
+arrow::Status CopyQuery(PGconn* conn, const char* query,
+                        std::shared_ptr<TableBuilder> builder) {
+  arrow::Status status = arrow::Status::OK();
+  auto copy_query =
+      arrow::util::StringBuilder("COPY (", query, ") TO STDOUT (FORMAT binary);");
+
+  PGresult* res = PQexec(conn, copy_query.c_str());
   if (PQresultStatus(res) != PGRES_COPY_OUT) {
-    std::cout << "error in copy command: " << PQresultErrorMessage(res) << std::endl;
+    status = arrow::Status::IOError("[libpq] ", PQresultErrorMessage(res));
   }
   PQclear(res);
+  ARROW_RETURN_NOT_OK(status);
+
+  // Attempts to obtain another row of data from the server during a COPY.
+  // Data is always returned one data row at a time; if only a partial row
+  // is available, it is not returned. Successful return of a data row involves
+  // allocating a chunk of memory to hold the data. The buffer parameter must
+  // be non-NULL. *buffer is set to point to the allocated memory, or to NULL
+  // in cases where no buffer is returned. A non-NULL result buffer should be
+  // freed using PQfreemem when no longer needed.
+
+  // When a row is successfully returned, the return value is the number of
+  // data bytes in the row (this will always be greater than zero). The returned
+  // string is always null-terminated, though this is probably only useful for
+  // textual COPY. A result of zero indicates that the COPY is still in progress,
+  // but no row is yet available (this is only possible when async is true).
+  // A result of -1 indicates that the COPY is done. A result of -2 indicates
+  // that an error occurred (consult PQerrorMessage for the reason).
+
+  // After PQgetCopyData returns -1, call PQgetResult to obtain the final result
+  // status of the COPY command. One can wait for this result to be available
+  // in the usual way. Then return to normal operation.
+  char* tuple = nullptr;
+  auto tuple_size = PQgetCopyData(conn, &tuple, 0);
+  StreamBuffer sb = StreamBuffer(tuple);
+
+  if (tuple_size > 0) {
+    const int kBinaryHeaderSize = 19;
+    const char* header = sb.ReadBinary(kBinaryHeaderSize);
+  }
 
   TableBuilder* builder_ = builder.get();
+  while (tuple_size > 0) {
+    status = builder_->Append(sb);
+    if (tuple != nullptr) PQfreemem(tuple);
+    ARROW_RETURN_NOT_OK(status);
 
-  char* tuple;
-
-  auto status = PQgetCopyData(conn, &tuple, 0);
-  if (status > 0) {
-    const int kBinaryHeaderSize = 19;
-    builder_->Append(tuple + kBinaryHeaderSize);
-
-    PQfreemem(tuple);
+    tuple_size = PQgetCopyData(conn, &tuple, 0);
+    sb = StreamBuffer(tuple);
   }
 
-  while (true) {
-    status = PQgetCopyData(conn, &tuple, 0);
-    if (status < 0) break;
-
-    builder_->Append(tuple);
-    PQfreemem(tuple);
-  }
+  if (tuple != nullptr) PQfreemem(tuple);
 
   res = PQgetResult(conn);
   if (PQresultStatus(res) != PGRES_COMMAND_OK) {
     // not really an issue...
     // pg_attribute gives "ERROR:  no binary output function available for type aclitem"
-    std::cout << "copy command failed: " << PQresultErrorMessage(res) << std::endl;
+    status = arrow::Status::IOError("[libpq] ", PQresultErrorMessage(res));
   }
   PQclear(res);
+  return status;
 }
 
 }  // namespace pgeon

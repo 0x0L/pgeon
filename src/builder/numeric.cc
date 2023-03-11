@@ -40,18 +40,14 @@ NumericBuilder::NumericBuilder(const SqlTypeInfo& info, const UserOptions& optio
 
   arrow_builder_ =
       std::make_unique<arrow::Decimal128Builder>(arrow::decimal128(precision_, scale_));
-  ptr_ = (arrow::Decimal128Builder*)arrow_builder_.get();
+  ptr_ = reinterpret_cast<arrow::Decimal128Builder*>(arrow_builder_.get());
 }
 
-size_t NumericBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
+arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
+  if (len == -1) return ptr_->AppendNull();
 
-  if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
-  }
-
+  const char* buf = sb.ReadBinary(len);
   auto rawdata = reinterpret_cast<const _NumericHelper*>(buf);
 
   int16_t ndigits = ntoh16(rawdata->ndigits);
@@ -63,21 +59,22 @@ size_t NumericBuilder::Append(const char* buf) {
   int16_t d, dig;
 
   if ((sign & NUMERIC_SIGN_MASK) == NUMERIC_NAN) {
-    auto status = ptr_->AppendNull();
-    return 4 + len;
+    return ptr_->AppendNull();
   }
 
   /* makes integer portion first */
   for (d = 0; d <= weight; d++) {
     dig = (d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
-    if (dig < 0 || dig >= NBASE) printf("Numeric digit is out of range: %d", dig);
+    if (dig < 0 || dig >= NBASE)
+      return arrow::Status::IOError("[numeric] digit is out of range");
     value = NBASE * value + dig;
   }
 
   /* makes floating point portion if any */
   while (scale > 0) {
     dig = (d >= 0 && d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
-    if (dig < 0 || dig >= NBASE) printf("Numeric digit is out of range: %d", dig);
+    if (dig < 0 || dig >= NBASE)
+      return arrow::Status::IOError("[numeric] digit is out of range");
 
     if (scale >= DEC_DIGITS)
       value = NBASE * value + dig;
@@ -88,16 +85,14 @@ size_t NumericBuilder::Append(const char* buf) {
     else if (scale == 1)
       value = 10L * value + dig / 1000L;
     else
-      printf("internal bug");
+      return arrow::Status::IOError("[numeric] Unexpected error while parsing");
     scale -= DEC_DIGITS;
     d++;
   }
   /* is it a negative value? */
   if ((sign & NUMERIC_NEG) != 0) value = -value;
 
-  auto status = ptr_->Append(value);
-
-  return 4 + len;
+  return ptr_->Append(value);
 }
 
 MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo& info, const UserOptions& options) {
@@ -106,23 +101,17 @@ MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo& info, const UserOptions& opt
 
   arrow_builder_ =
       std::make_unique<arrow::Decimal128Builder>(arrow::decimal128(precision_, scale_));
-  ptr_ = (arrow::Decimal128Builder*)arrow_builder_.get();
+  ptr_ = reinterpret_cast<arrow::Decimal128Builder*>(arrow_builder_.get());
 }
 
-size_t MonetaryBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
+arrow::Status MonetaryBuilder::Append(StreamBuffer& sb) {
+  int32_t len = sb.ReadInt32();
   if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
+    return ptr_->AppendNull();
   }
 
-  arrow::Decimal128 value = unpack_int64(buf);
-  buf += 8;
-
-  auto status = ptr_->Append(value);
-  return 4 + len;
+  arrow::Decimal128 value = sb.ReadInt64();
+  return ptr_->Append(value);
 }
 
 }  // namespace pgeon

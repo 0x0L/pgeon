@@ -15,8 +15,8 @@ class BinaryBuilder : public ArrayBuilder {
   arrow::FixedSizeBinaryBuilder* fixed_size_binary_ptr_;
 
  public:
-  BinaryBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  BinaryBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class JsonbBuilder : public ArrayBuilder {
@@ -24,8 +24,8 @@ class JsonbBuilder : public ArrayBuilder {
   arrow::StringBuilder* ptr_;
 
  public:
-  JsonbBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  JsonbBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class HstoreBuilder : public ArrayBuilder {
@@ -35,8 +35,8 @@ class HstoreBuilder : public ArrayBuilder {
   arrow::StringBuilder* item_builder_;
 
  public:
-  HstoreBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  HstoreBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 }  // namespace pgeon

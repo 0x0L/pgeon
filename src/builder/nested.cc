@@ -11,41 +11,28 @@ ListBuilder::ListBuilder(const SqlTypeInfo& info, const UserOptions&)
     : value_builder_(info.value_builder) {
   arrow_builder_ = std::make_unique<arrow::ListBuilder>(
       arrow::default_memory_pool(), std::move(value_builder_->arrow_builder_));
-  ptr_ = (arrow::ListBuilder*)arrow_builder_.get();
+  ptr_ = reinterpret_cast<arrow::ListBuilder*>(arrow_builder_.get());
 }
 
-size_t ListBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
-  if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
-  }
-
-  int32_t ndim = unpack_int32(buf);
-  buf += 4;
-  // int32_t hasnull = unpack_int32(buf);
-  buf += 4;
-  // int32_t element_type = unpack_int32(buf);
-  buf += 4;
+arrow::Status ListBuilder::Append(StreamBuffer& sb) {
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  int32_t ndim = sb.ReadInt32();
+  int32_t hasnull = sb.ReadInt32();
+  int32_t element_type = sb.ReadInt32();
 
   // Element will be flattened
   int32_t nitems = 1;
   for (int32_t i = 0; i < ndim; i++) {
-    int32_t dim = unpack_int32(buf);
-    buf += 4;
-    // int32_t lb = unpack_int32(buf);
-    buf += 4;
+    int32_t dim = sb.ReadInt32();
+    int32_t lb = sb.ReadInt32();
     nitems *= dim;
   }
 
-  auto status = ptr_->Append();
+  ARROW_RETURN_NOT_OK(ptr_->Append());
   for (int32_t i = 0; i < nitems; i++) {
-    buf += value_builder_->Append(buf);
+    ARROW_RETURN_NOT_OK(value_builder_->Append(sb));
   }
-
-  return 4 + len;
+  return arrow::Status::OK();
 }
 
 StructBuilder::StructBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -62,33 +49,19 @@ StructBuilder::StructBuilder(const SqlTypeInfo& info, const UserOptions&) {
 
   arrow_builder_ = std::make_unique<arrow::StructBuilder>(
       arrow::struct_(fv), arrow::default_memory_pool(), builders);
-
-  ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
+  ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
 }
 
-size_t StructBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
-
-  if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
-  }
-
-  auto status = ptr_->Append();
-
-  int32_t validcols = unpack_int32(buf);
+arrow::Status StructBuilder::Append(StreamBuffer& sb) {
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  ARROW_RETURN_NOT_OK(ptr_->Append());
+  int32_t validcols = sb.ReadInt32();
   assert(validcols == ncolumns_);
-  buf += 4;
-
   for (size_t i = 0; i < ncolumns_; i++) {
-    // int32_t column_type = unpack_int32(buf);
-    buf += 4;
-
-    buf += builders_[i]->Append(buf);
+    int32_t column_type = sb.ReadInt32();
+    ARROW_RETURN_NOT_OK(builders_[i]->Append(sb));
   }
-
-  return 4 + len;
+  return arrow::Status::OK();
 }
 
 }  // namespace pgeon

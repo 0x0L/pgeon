@@ -15,8 +15,8 @@ class ListBuilder : public ArrayBuilder {
   arrow::ListBuilder* ptr_;
 
  public:
-  ListBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  ListBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class StructBuilder : public ArrayBuilder {
@@ -26,8 +26,8 @@ class StructBuilder : public ArrayBuilder {
   size_t ncolumns_;
 
  public:
-  StructBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  StructBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 }  // namespace pgeon

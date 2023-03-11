@@ -6,12 +6,13 @@ from cython.operator cimport dereference as deref
 from libcpp.memory cimport shared_ptr, unique_ptr
 
 from pyarrow.lib cimport (
-    _Weakrefable, c_bool, check_status, CStatus, CTable, move, pyarrow_wrap_table
+    _Weakrefable, CResult, CStatus, CTable, GetResultValue,
+    c_bool, check_status, move, pyarrow_wrap_table
 )
 
 import pyarrow
 
-cdef extern from "pgeon.h" namespace "pgeon":
+cdef extern from "pgeon.h" namespace "pgeon" nogil:
     cdef cppclass CUserOptions" pgeon::UserOptions":
         c_bool string_as_dictionaries
         int default_numeric_precision
@@ -26,7 +27,8 @@ cdef extern from "pgeon.h" namespace "pgeon":
 
         CStatus Validate()
 
-    cdef shared_ptr[CTable] CopyQuery(const char* conninfo, const char* query, CUserOptions options) nogil
+    cdef CResult[shared_ptr[CTable]] CopyQuery(
+        const char* conninfo, const char* query, CUserOptions options)
 
 
 cdef class UserOptions(_Weakrefable):
@@ -38,13 +40,13 @@ cdef class UserOptions(_Weakrefable):
         Whether to treat string columns as dictionaries
 
     default_numeric_precision : int, optional (default 22)
-        TODO
+        Default precision for numeric type
 
     default_numeric_scale : bool, optional (default 6)
-        TODO
+        Default scale for numeric type
 
     monetary_fractional_precision : bool, optional (default 2)
-        TODO
+        Default monetary precision
     """
     cdef:
         unique_ptr[CUserOptions] options
@@ -66,6 +68,15 @@ cdef class UserOptions(_Weakrefable):
         if monetary_fractional_precision is not None:
             self.monetary_fractional_precision = monetary_fractional_precision
 
+    def __repr__(self) -> str:
+        return (
+            "pgeon.UserOptions<string_as_dictionaries={} default_numeric_precision={} "
+            "default_numeric_scale={} monetary_fractional_precision={}>".format(
+                self.string_as_dictionaries, self.default_numeric_precision,
+                self.default_numeric_scale, self.monetary_fractional_precision
+            )
+        )
+
     @property
     def string_as_dictionaries(self):
         """
@@ -80,7 +91,7 @@ cdef class UserOptions(_Weakrefable):
     @property
     def default_numeric_precision(self):
         """
-        TODO
+        Default precision for numeric type
         """
         return deref(self.options).default_numeric_precision
 
@@ -91,7 +102,7 @@ cdef class UserOptions(_Weakrefable):
     @property
     def default_numeric_scale(self):
         """
-        TODO
+        Default scale for numeric type
         """
         return deref(self.options).default_numeric_scale
 
@@ -102,7 +113,7 @@ cdef class UserOptions(_Weakrefable):
     @property
     def monetary_fractional_precision(self):
         """
-        TODO
+        Default monetary precision
         """
         return deref(self.options).monetary_fractional_precision
 
@@ -160,6 +171,9 @@ def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> p
     query : str
         The SQL query
 
+    user_options : UserOptions, optional
+        User options
+
     Returns
     -------
     pyarrow.Table
@@ -169,7 +183,7 @@ def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> p
     enc_query = query.encode('utf8')
 
     cdef:
-        shared_ptr[CTable] tbl
+        CResult[shared_ptr[CTable]] table
         const char* c_conninfo = enc_conninfo
         const char* c_query = enc_query
         CUserOptions c_options
@@ -177,6 +191,6 @@ def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> p
     _get_user_options(user_options, &c_options)
 
     with nogil:
-        tbl = CopyQuery(c_conninfo, c_query, c_options)
+        table = CopyQuery(c_conninfo, c_query, c_options)
 
-    return pyarrow_wrap_table(tbl)
+    return pyarrow_wrap_table(GetResultValue(table))

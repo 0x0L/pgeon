@@ -14,8 +14,8 @@ class NullBuilder : public ArrayBuilder {
   arrow::NullBuilder* ptr_;
 
  public:
-  NullBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  NullBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class TidBuilder : public ArrayBuilder {
@@ -25,8 +25,8 @@ class TidBuilder : public ArrayBuilder {
   arrow::Int16Builder* offset_builder_;
 
  public:
-  TidBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  TidBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class PgSnapshotBuilder : public ArrayBuilder {
@@ -38,8 +38,8 @@ class PgSnapshotBuilder : public ArrayBuilder {
   arrow::Int64Builder* value_builder_;
 
  public:
-  PgSnapshotBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  PgSnapshotBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 }  // namespace pgeon

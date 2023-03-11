@@ -8,43 +8,57 @@
 #include "builder/base.h"
 #include "util/hton.h"
 
+#define APPEND_AND_RETURN_IF_EMPTY(sb, ptr) \
+  do {                                      \
+    int32_t len = sb.ReadInt32();           \
+    if (len == -1) {                        \
+      return ptr->AppendNull();             \
+    }                                       \
+  } while (0)
+
 namespace pgeon {
 
-struct IdRecv {
-  static inline const char* recv(const char* x) { return x; }
+struct BinaryRecv {
+  static const char* recv(StreamBuffer& sb, size_t len) { return sb.ReadBinary(len); }
 };
 
 struct DateRecv {
   static const int32_t kEpoch = 10957;  // 2000-01-01 - 1970-01-01 (days)
-  static inline int32_t recv(const char* x) { return unpack_int32(x) + kEpoch; }
+  static inline int32_t recv(StreamBuffer& sb) { return sb.ReadInt32() + kEpoch; }
 };
 
 struct BoolRecv {
-  static inline bool recv(const char* x) { return (*x != 0); }
+  static inline bool recv(StreamBuffer& sb) { return (sb.ReadUInt8() != 0); }
 };
 
-struct CharRecv {
-  static inline uint8_t recv(const char* x) { return *x; }
+struct UInt8Recv {
+  static inline uint8_t recv(StreamBuffer& sb) { return sb.ReadUInt8(); }
 };
 
-struct Int2Recv {
-  static inline int16_t recv(const char* x) { return unpack_int16(x); }
+struct Int16Recv {
+  static inline int16_t recv(StreamBuffer& sb) { return sb.ReadInt16(); }
 };
 
-struct Int4Recv {
-  static inline int32_t recv(const char* x) { return unpack_int32(x); }
+struct Int32Recv {
+  static inline int32_t recv(StreamBuffer& sb) { return sb.ReadInt32(); }
 };
 
-struct Int8Recv {
-  static inline int64_t recv(const char* x) { return unpack_int64(x); }
+struct Int64Recv {
+  static inline int64_t recv(StreamBuffer& sb) { return sb.ReadInt64(); }
 };
 
-struct Float4Recv {
-  static inline float recv(const char* x) { return unpack_float(x); }
+struct Float32Recv {
+  static inline float recv(StreamBuffer& sb) {
+    auto x = sb.ReadBinary(4);
+    return unpack_float(x);
+  }
 };
 
-struct Float8Recv {
-  static inline double recv(const char* x) { return unpack_double(x); }
+struct Float64Recv {
+  static inline double recv(StreamBuffer& sb) {
+    auto x = sb.ReadBinary(8);
+    return unpack_double(x);
+  }
 };
 
 template <class BuilderT, typename RecvT>
@@ -58,28 +72,25 @@ class GenericBuilder : public ArrayBuilder {
     ptr_ = reinterpret_cast<BuilderT*>(arrow_builder_.get());
   }
 
-  size_t Append(const char* buf) {
-    int32_t len = unpack_int32(buf);
-    buf += 4;
-
+  arrow::Status Append(StreamBuffer& sb) {
+    int32_t len = sb.ReadInt32();
     if (len == -1) {
-      if constexpr (std::is_base_of<BuilderT, arrow::FloatBuilder>::value ||
-                    std::is_base_of<BuilderT, arrow::DoubleBuilder>::value)
-        auto status = ptr_->Append(NAN);
-      else
-        auto status = ptr_->AppendNull();
-      return 4;
+      // TODO: as an option ?
+      // if constexpr (std::is_base_of<BuilderT, arrow::FloatBuilder>::value ||
+      //               std::is_base_of<BuilderT, arrow::DoubleBuilder>::value)
+      //   return ptr_->Append(NAN);
+      // else
+      return ptr_->AppendNull();
     }
 
-    auto value = RecvT::recv(buf);
     if constexpr (std::is_base_of<BuilderT, arrow::BinaryBuilder>::value ||
                   std::is_base_of<BuilderT, arrow::StringBuilder>::value ||
-                  std::is_base_of<BuilderT, arrow::StringDictionaryBuilder>::value)
-      auto status = ptr_->Append(value, len);
-    else
-      auto status = ptr_->Append(value);
-
-    return 4 + len;
+                  std::is_base_of<BuilderT, arrow::StringDictionaryBuilder>::value ||
+                  std::is_base_of<BuilderT, arrow::StringDictionary32Builder>::value) {
+      return ptr_->Append(RecvT::recv(sb, len), len);
+    } else {
+      return ptr_->Append(RecvT::recv(sb));
+    }
   }
 };
 

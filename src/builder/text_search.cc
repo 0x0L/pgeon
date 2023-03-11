@@ -13,48 +13,35 @@ TsVectorBuilder::TsVectorBuilder(const SqlTypeInfo& info, const UserOptions&) {
                                    &arrow_builder_);
 
   ptr_ = reinterpret_cast<arrow::MapBuilder*>(arrow_builder_.get());
-  key_builder_ = (arrow::StringBuilder*)ptr_->key_builder();
-  item_builder_ = (arrow::ListBuilder*)ptr_->item_builder();
-  value_builder_ = (arrow::Int32Builder*)item_builder_->value_builder();
+  key_builder_ = reinterpret_cast<arrow::StringBuilder*>(ptr_->key_builder());
+  item_builder_ = reinterpret_cast<arrow::ListBuilder*>(ptr_->item_builder());
+  value_builder_ = reinterpret_cast<arrow::Int32Builder*>(item_builder_->value_builder());
 }
 
-size_t TsVectorBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
+arrow::Status TsVectorBuilder::Append(StreamBuffer& sb) {
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  ARROW_RETURN_NOT_OK(ptr_->Append());
 
-  if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
-  }
-
-  auto status = ptr_->Append();
-
-  int32_t size = unpack_int32(buf);
-
-  buf += 4;
-
+  int32_t size = sb.ReadInt32();
   int16_t npos;
   for (int32_t i = 0; i < size; i++) {
+    const char* buf = sb.ReadBinary(1);
+    const char* start_buf = buf;
     int16_t flen = 0;
-    while (*(buf + flen) != '\0') flen++;
+    while (*buf != '\0') {
+      flen += 1;
+      buf = sb.ReadBinary(1);
+    }
 
-    status = key_builder_->Append(buf, flen);
-    buf += flen + 1;
+    ARROW_RETURN_NOT_OK(key_builder_->Append(start_buf, flen));
 
-    status = item_builder_->Append();
-
-    npos = unpack_int16(buf);
-    buf += 2;
-
+    ARROW_RETURN_NOT_OK(item_builder_->Append());
+    npos = sb.ReadInt16();
     for (int16_t j = 0; j < npos; j++) {
-      int16_t pos = unpack_int16(buf);
-      buf += 2;
-
-      status = value_builder_->Append(pos);
+      ARROW_RETURN_NOT_OK(value_builder_->Append(sb.ReadInt16()));
     }
   }
-
-  return 4 + len;
+  return arrow::Status::OK();
 }
 
 #define QI_VAL 1
@@ -68,7 +55,7 @@ size_t TsVectorBuilder::Append(const char* buf) {
 #define OP_COUNT
 
 TsQueryBuilder::TsQueryBuilder(const SqlTypeInfo& info, const UserOptions&) {
-  auto type = arrow::list(arrow::struct_({
+  static const auto& type = arrow::list(arrow::struct_({
       arrow::field("type", arrow::int8()),
       arrow::field("weight", arrow::int8()),
       arrow::field("prefix", arrow::int8()),
@@ -80,86 +67,76 @@ TsQueryBuilder::TsQueryBuilder(const SqlTypeInfo& info, const UserOptions&) {
   auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
 
   ptr_ = reinterpret_cast<arrow::ListBuilder*>(arrow_builder_.get());
-  value_builder_ = (arrow::StructBuilder*)ptr_->value_builder();
-  type_builder_ = (arrow::Int8Builder*)value_builder_->child(0);
-  weight_builder_ = (arrow::Int8Builder*)value_builder_->child(1);
-  prefix_builder_ = (arrow::Int8Builder*)value_builder_->child(2);
-  operand_builder_ = (arrow::StringBuilder*)value_builder_->child(3);
-  oper_builder_ = (arrow::Int8Builder*)value_builder_->child(4);
-  distance_builder_ = (arrow::Int16Builder*)value_builder_->child(5);
+  value_builder_ = reinterpret_cast<arrow::StructBuilder*>(ptr_->value_builder());
+  type_builder_ = reinterpret_cast<arrow::Int8Builder*>(value_builder_->child(0));
+  weight_builder_ = reinterpret_cast<arrow::Int8Builder*>(value_builder_->child(1));
+  prefix_builder_ = reinterpret_cast<arrow::Int8Builder*>(value_builder_->child(2));
+  operand_builder_ = reinterpret_cast<arrow::StringBuilder*>(value_builder_->child(3));
+  oper_builder_ = reinterpret_cast<arrow::Int8Builder*>(value_builder_->child(4));
+  distance_builder_ = reinterpret_cast<arrow::Int16Builder*>(value_builder_->child(5));
 }
 
-size_t TsQueryBuilder::Append(const char* buf) {
-  int32_t len = unpack_int32(buf);
-  buf += 4;
+arrow::Status TsQueryBuilder::Append(StreamBuffer& sb) {
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  ARROW_RETURN_NOT_OK(ptr_->Append());
 
-  if (len == -1) {
-    auto status = ptr_->AppendNull();
-    return 4;
-  }
-
-  auto status = ptr_->Append();
-
-  int32_t size = unpack_int32(buf);
-  buf += 4;
-
+  int32_t size = sb.ReadInt32();
   int16_t npos;
   for (int32_t i = 0; i < size; i++) {
-    status = value_builder_->Append();
-
-    int8_t type = *buf;
-    buf += 1;
-
+    ARROW_RETURN_NOT_OK(value_builder_->Append());
+    int8_t type = sb.ReadUInt8();
     switch (type) {
       case QI_VAL: {
-        int8_t weight = *buf;
-        int8_t prefix = *buf + 1;
-        buf += 2;
+        int8_t weight = sb.ReadUInt8();
+        int8_t prefix = sb.ReadUInt8();
 
+        const char* buf = sb.ReadBinary(1);
+        const char* start_buf = buf;
         int16_t flen = 0;
-        while (*(buf + flen) != '\0') flen++;
+        while (*buf != '\0') {
+          flen += 1;
+          buf = sb.ReadBinary(1);
+        }
 
-        status = type_builder_->Append(type);
-        status = weight_builder_->Append(weight);
-        status = prefix_builder_->Append(prefix);
-        status = operand_builder_->Append(buf, flen);  // TODO(xav)
-        status = oper_builder_->AppendNull();
-        status = distance_builder_->AppendNull();
+        ARROW_RETURN_NOT_OK(type_builder_->Append(type));
+        ARROW_RETURN_NOT_OK(weight_builder_->Append(weight));
+        ARROW_RETURN_NOT_OK(prefix_builder_->Append(prefix));
+        ARROW_RETURN_NOT_OK(operand_builder_->Append(start_buf, flen));  // TODO
+        ARROW_RETURN_NOT_OK(oper_builder_->AppendNull());
+        ARROW_RETURN_NOT_OK(distance_builder_->AppendNull());
+
         buf += flen + 1;
       } break;
 
       case QI_OPR: {
-        int8_t oper = *buf;
-        buf += 1;
+        int8_t oper = sb.ReadUInt8();
 
-        status = type_builder_->Append(type);
-        status = weight_builder_->AppendNull();
-        status = prefix_builder_->AppendNull();
-        status = operand_builder_->AppendNull();
-        status = oper_builder_->Append(oper);
+        ARROW_RETURN_NOT_OK(type_builder_->Append(type));
+        ARROW_RETURN_NOT_OK(weight_builder_->AppendNull());
+        ARROW_RETURN_NOT_OK(prefix_builder_->AppendNull());
+        ARROW_RETURN_NOT_OK(operand_builder_->AppendNull());
+        ARROW_RETURN_NOT_OK(oper_builder_->Append(oper));
 
         if (oper == OP_PHRASE) {
-          int16_t distance = unpack_int16(buf);
-          buf += 2;
-
-          status = distance_builder_->Append(distance);
+          int16_t distance = sb.ReadInt16();
+          ARROW_RETURN_NOT_OK(distance_builder_->Append(distance));
         } else {
-          status = distance_builder_->AppendNull();
+          ARROW_RETURN_NOT_OK(distance_builder_->AppendNull());
         }
       } break;
 
       default: {
-        status = type_builder_->Append(type);
-        status = weight_builder_->AppendNull();
-        status = prefix_builder_->AppendNull();
-        status = operand_builder_->AppendNull();
-        status = oper_builder_->AppendNull();
-        status = distance_builder_->AppendNull();
+        ARROW_RETURN_NOT_OK(type_builder_->Append(type));
+        ARROW_RETURN_NOT_OK(weight_builder_->AppendNull());
+        ARROW_RETURN_NOT_OK(prefix_builder_->AppendNull());
+        ARROW_RETURN_NOT_OK(operand_builder_->AppendNull());
+        ARROW_RETURN_NOT_OK(oper_builder_->AppendNull());
+        ARROW_RETURN_NOT_OK(distance_builder_->AppendNull());
+
       } break;
     }
   }
-
-  return 4 + len;
+  return arrow::Status::OK();
 }
 
 }  // namespace pgeon

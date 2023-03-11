@@ -29,15 +29,17 @@ namespace pgeon {
 
 struct UserOptions {
   bool string_as_dictionaries = false;
-  int default_numeric_precision = 22;  // TODO(xav) max precision of 128 decimal ?
+  // TODO max precision of 128 decimal ?
+  int default_numeric_precision = 22;
   int default_numeric_scale = 6;
-  int monetary_fractional_precision = 2;  // TODO(xav) lc_monetary
+  // TODO lc_monetary
+  int monetary_fractional_precision = 2;
 
   static UserOptions Defaults();
   arrow::Status Validate() const;
 };
 
-std::shared_ptr<arrow::Table> CopyQuery(
+arrow::Result<std::shared_ptr<arrow::Table>> CopyQuery(
     const char* conninfo, const char* query,
     const UserOptions& options = UserOptions::Defaults());
 

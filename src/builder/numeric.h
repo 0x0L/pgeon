@@ -13,8 +13,8 @@ class NumericBuilder : public ArrayBuilder {
   int scale_;
 
  public:
-  NumericBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  NumericBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class MonetaryBuilder : public ArrayBuilder {
@@ -24,8 +24,8 @@ class MonetaryBuilder : public ArrayBuilder {
   int scale_;
 
  public:
-  MonetaryBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  MonetaryBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 }  // namespace pgeon

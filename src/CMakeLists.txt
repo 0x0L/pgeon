@@ -26,5 +26,6 @@ install(
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
+find_package(Parquet REQUIRED)
 add_executable(pgeon-cli cli.cc)
-target_link_libraries(pgeon-cli PRIVATE pgeon arrow_shared PostgreSQL::PostgreSQL)
+target_link_libraries(pgeon-cli PRIVATE pgeon arrow_shared parquet_shared PostgreSQL::PostgreSQL)

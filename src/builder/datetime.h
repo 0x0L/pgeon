@@ -12,7 +12,7 @@ class TimeBuilder : public ArrayBuilder {
 
  public:
   TimeBuilder(const SqlTypeInfo&, const UserOptions&);
-  size_t Append(const char* buf);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class TimeTzBuilder : public ArrayBuilder {
@@ -21,7 +21,7 @@ class TimeTzBuilder : public ArrayBuilder {
 
  public:
   TimeTzBuilder(const SqlTypeInfo&, const UserOptions&);
-  size_t Append(const char* buf);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class TimestampBuilder : public ArrayBuilder {
@@ -30,7 +30,7 @@ class TimestampBuilder : public ArrayBuilder {
 
  public:
   TimestampBuilder(const SqlTypeInfo&, const UserOptions&);
-  size_t Append(const char* buf);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class IntervalBuilder : public ArrayBuilder {
@@ -38,8 +38,8 @@ class IntervalBuilder : public ArrayBuilder {
   arrow::MonthDayNanoIntervalBuilder* ptr_;
 
  public:
-  IntervalBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  IntervalBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 }  // namespace pgeon

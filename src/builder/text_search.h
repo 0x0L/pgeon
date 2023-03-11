@@ -16,8 +16,8 @@ class TsVectorBuilder : public ArrayBuilder {
   arrow::Int32Builder* value_builder_;
 
  public:
-  TsVectorBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  TsVectorBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 class TsQueryBuilder : public ArrayBuilder {
@@ -32,8 +32,8 @@ class TsQueryBuilder : public ArrayBuilder {
   arrow::Int16Builder* distance_builder_;
 
  public:
-  TsQueryBuilder(const SqlTypeInfo& info, const UserOptions&);
-  size_t Append(const char* buf);
+  TsQueryBuilder(const SqlTypeInfo&, const UserOptions&);
+  arrow::Status Append(StreamBuffer&);
 };
 
 }  // namespace pgeon

@@ -8,7 +8,6 @@
 
 namespace pgeon {
 
-std::shared_ptr<ArrayBuilder> MakeBuilder(const SqlTypeInfo& info,
-                                          const UserOptions& options);
+std::shared_ptr<ArrayBuilder> MakeBuilder(const SqlTypeInfo&, const UserOptions&);
 
 }  // namespace pgeon
