@@ -37,7 +37,7 @@ struct UserOptions {
   arrow::Status Validate() const;
 };
 
-std::shared_ptr<arrow::Table> CopyQuery(
+arrow::Result<std::shared_ptr<arrow::Table>> CopyQuery(
     const char* conninfo, const char* query,
     const UserOptions& options = UserOptions::Defaults());
 

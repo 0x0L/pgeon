@@ -11,15 +11,11 @@ ListBuilder::ListBuilder(const SqlTypeInfo& info, const UserOptions&)
     : value_builder_(info.value_builder) {
   arrow_builder_ = std::make_unique<arrow::ListBuilder>(
       arrow::default_memory_pool(), std::move(value_builder_->arrow_builder_));
-  ptr_ = (arrow::ListBuilder*)arrow_builder_.get();
+  ptr_ = reinterpret_cast<arrow::ListBuilder*>(arrow_builder_.get());
 }
 
 arrow::Status ListBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
-  }
-
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
   int32_t ndim = sb.ReadInt32();
   int32_t hasnull = sb.ReadInt32();
   int32_t element_type = sb.ReadInt32();
@@ -32,12 +28,11 @@ arrow::Status ListBuilder::Append(StreamBuffer& sb) {
     nitems *= dim;
   }
 
-  auto status = ptr_->Append();
+  ARROW_RETURN_NOT_OK(ptr_->Append());
   for (int32_t i = 0; i < nitems; i++) {
-    status = value_builder_->Append(sb);
+    ARROW_RETURN_NOT_OK(value_builder_->Append(sb));
   }
-
-  return status;
+  return arrow::Status::OK();
 }
 
 StructBuilder::StructBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -54,27 +49,19 @@ StructBuilder::StructBuilder(const SqlTypeInfo& info, const UserOptions&) {
 
   arrow_builder_ = std::make_unique<arrow::StructBuilder>(
       arrow::struct_(fv), arrow::default_memory_pool(), builders);
-
-  ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
+  ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
 }
 
 arrow::Status StructBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
-  }
-
-  auto status = ptr_->Append();
-
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  ARROW_RETURN_NOT_OK(ptr_->Append());
   int32_t validcols = sb.ReadInt32();
   assert(validcols == ncolumns_);
-
   for (size_t i = 0; i < ncolumns_; i++) {
     int32_t column_type = sb.ReadInt32();
-    status = builders_[i]->Append(sb);
+    ARROW_RETURN_NOT_OK(builders_[i]->Append(sb));
   }
-
-  return status;
+  return arrow::Status::OK();
 }
 
 }  // namespace pgeon

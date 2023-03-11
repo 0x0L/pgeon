@@ -13,25 +13,24 @@ TableBuilder::TableBuilder(const FieldVector& fields) : fields_(fields) {
     schema.push_back(arrow::field(name, builder->type()));
   }
   schema_ = arrow::schema(schema);
-  // fields_offsets_ = std::vector<int32_t>(fields.size(), 0);
 }
 
 arrow::Status TableBuilder::Append(StreamBuffer& sb) {
   int16_t nfields = sb.ReadInt16();
-
   if (nfields == -1) return arrow::Status::OK();
 
-  arrow::Status status;
   for (int16_t i = 0; i < nfields; i++) {
-    status = builders_[i]->Append(sb);
+    ARROW_RETURN_NOT_OK(builders_[i]->Append(sb));
   }
-  return status;
+  return arrow::Status::OK();
 }
 
-std::shared_ptr<arrow::Table> TableBuilder::Flush() {
+arrow::Result<std::shared_ptr<arrow::Table>> TableBuilder::Flush() {
   std::vector<std::shared_ptr<arrow::Array>> arrays(fields_.size());
+  std::shared_ptr<arrow::Array> array;
   for (size_t i = 0; i < fields_.size(); i++) {
-    arrays[i] = builders_[i]->Flush();
+    ARROW_ASSIGN_OR_RAISE(array, builders_[i]->Flush());
+    arrays[i] = array;
   }
 
   auto batch = arrow::Table::Make(schema_, arrays);

@@ -3,16 +3,20 @@
 #include <pgeon.h>
 #include <iostream>
 
-int main(int argc, char const *argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " DB QUERY" << std::endl;
-        return 1;
-    }
+// #include <arrow/io/api.h>
+// #include <parquet/arrow/writer.h>
 
-    argv[1] = "postgresql://localhost:5432/postgres";
-    argv[2] = "SELECT '(1.2, 4.3)'::point";
+int main(int argc, char const* argv[]) {
+  if (argc != 3) {
+    std::cerr << "Usage: " << argv[0] << " DB QUERY" << std::endl;
+    return 1;
+  }
 
-    auto table = pgeon::CopyQuery(argv[1], argv[2]);
-    std::cout << table->ToString() << std::endl;
-    return 0;
+  auto table = pgeon::CopyQuery(argv[1], argv[2]).ValueOrDie();
+  std::cout << table->ToString() << std::endl;
+
+  // std::shared_ptr<arrow::io::OutputStream> output =
+  // arrow::io::FileOutputStream::Open("toto.parquet").ValueOrDie();
+  // parquet::arrow::WriteTable(*table, arrow::default_memory_pool(), output);
+  return 0;
 }

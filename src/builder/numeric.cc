@@ -40,14 +40,12 @@ NumericBuilder::NumericBuilder(const SqlTypeInfo& info, const UserOptions& optio
 
   arrow_builder_ =
       std::make_unique<arrow::Decimal128Builder>(arrow::decimal128(precision_, scale_));
-  ptr_ = (arrow::Decimal128Builder*)arrow_builder_.get();
+  ptr_ = reinterpret_cast<arrow::Decimal128Builder*>(arrow_builder_.get());
 }
 
 arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
   int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
-  }
+  if (len == -1) return ptr_->AppendNull();
 
   const char* buf = sb.ReadBinary(len);
   auto rawdata = reinterpret_cast<const _NumericHelper*>(buf);
@@ -67,14 +65,16 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
   /* makes integer portion first */
   for (d = 0; d <= weight; d++) {
     dig = (d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
-    if (dig < 0 || dig >= NBASE) printf("Numeric digit is out of range: %d", dig);
+    if (dig < 0 || dig >= NBASE)
+      return arrow::Status::ExecutionError("[numeric] digit is out of range");
     value = NBASE * value + dig;
   }
 
   /* makes floating point portion if any */
   while (scale > 0) {
     dig = (d >= 0 && d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
-    if (dig < 0 || dig >= NBASE) printf("Numeric digit is out of range: %d", dig);
+    if (dig < 0 || dig >= NBASE)
+      return arrow::Status::ExecutionError("[numeric] digit is out of range");
 
     if (scale >= DEC_DIGITS)
       value = NBASE * value + dig;
@@ -85,7 +85,7 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
     else if (scale == 1)
       value = 10L * value + dig / 1000L;
     else
-      printf("internal bug");
+      return arrow::Status::ExecutionError("[numeric] Unexpected error while parsing");
     scale -= DEC_DIGITS;
     d++;
   }
@@ -101,7 +101,7 @@ MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo& info, const UserOptions& opt
 
   arrow_builder_ =
       std::make_unique<arrow::Decimal128Builder>(arrow::decimal128(precision_, scale_));
-  ptr_ = (arrow::Decimal128Builder*)arrow_builder_.get();
+  ptr_ = reinterpret_cast<arrow::Decimal128Builder*>(arrow_builder_.get());
 }
 
 arrow::Status MonetaryBuilder::Append(StreamBuffer& sb) {

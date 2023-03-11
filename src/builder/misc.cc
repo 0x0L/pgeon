@@ -22,27 +22,16 @@ TidBuilder::TidBuilder(const SqlTypeInfo& info, const UserOptions&) {
   });
 
   auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
-  ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
-
-  block_builder_ = (arrow::Int32Builder*)ptr_->child(0);
-  offset_builder_ = (arrow::Int16Builder*)ptr_->child(1);
+  ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
+  block_builder_ = reinterpret_cast<arrow::Int32Builder*>(ptr_->child(0));
+  offset_builder_ = reinterpret_cast<arrow::Int16Builder*>(ptr_->child(1));
 }
 
 arrow::Status TidBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
-  }
-
-  auto status = ptr_->Append();
-
-  int32_t block = sb.ReadInt32();
-  int32_t offset = sb.ReadInt16();
-
-  status = block_builder_->Append(block);
-  status = offset_builder_->Append(offset);
-
-  return status;
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  ARROW_RETURN_NOT_OK(ptr_->Append());
+  ARROW_RETURN_NOT_OK(block_builder_->Append(sb.ReadInt32()));
+  return offset_builder_->Append(sb.ReadInt16());
 }
 
 PgSnapshotBuilder::PgSnapshotBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -51,36 +40,25 @@ PgSnapshotBuilder::PgSnapshotBuilder(const SqlTypeInfo& info, const UserOptions&
                               arrow::field("xip", arrow::list(arrow::int64()))});
 
   auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
-  ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
-
-  xmin_builder_ = (arrow::Int64Builder*)ptr_->child(0);
-  xmax_builder_ = (arrow::Int64Builder*)ptr_->child(1);
-  xip_builder_ = (arrow::ListBuilder*)ptr_->child(2);
-  value_builder_ = (arrow::Int64Builder*)xip_builder_->value_builder();
+  ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
+  xmin_builder_ = reinterpret_cast<arrow::Int64Builder*>(ptr_->child(0));
+  xmax_builder_ = reinterpret_cast<arrow::Int64Builder*>(ptr_->child(1));
+  xip_builder_ = reinterpret_cast<arrow::ListBuilder*>(ptr_->child(2));
+  value_builder_ = reinterpret_cast<arrow::Int64Builder*>(xip_builder_->value_builder());
 }
 
 arrow::Status PgSnapshotBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
-  }
-
-  auto status = ptr_->Append();
-  status = xip_builder_->Append();
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  ARROW_RETURN_NOT_OK(ptr_->Append());
+  ARROW_RETURN_NOT_OK(xip_builder_->Append());
 
   int32_t nxip = sb.ReadInt32();
-  int64_t xmin = sb.ReadInt64();
-  int64_t xmax = sb.ReadInt64();
-
-  status = xmin_builder_->Append(xmin);
-  status = xmax_builder_->Append(xmax);
-
+  ARROW_RETURN_NOT_OK(xmin_builder_->Append(sb.ReadInt64()));
+  ARROW_RETURN_NOT_OK(xmax_builder_->Append(sb.ReadInt64()));
   for (int32_t i = 0; i < nxip; i++) {
-    int64_t xip = sb.ReadInt64();
-    status = value_builder_->Append(xip);
+    ARROW_RETURN_NOT_OK(value_builder_->Append(sb.ReadInt64()));
   }
-
-  return status;
+  return arrow::Status::OK();
 }
 
 }  // namespace pgeon

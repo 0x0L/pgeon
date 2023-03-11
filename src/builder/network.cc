@@ -14,33 +14,24 @@ InetBuilder::InetBuilder(const SqlTypeInfo& info, const UserOptions&) {
   });
 
   auto status = arrow::MakeBuilder(arrow::default_memory_pool(), type, &arrow_builder_);
-  ptr_ = (arrow::StructBuilder*)arrow_builder_.get();
-
-  family_builder_ = (arrow::UInt8Builder*)ptr_->child(0);
-  bits_builder_ = (arrow::UInt8Builder*)ptr_->child(1);
-  is_cidr_builder_ = (arrow::BooleanBuilder*)ptr_->child(2);
-  ipaddr_builder_ = (arrow::BinaryBuilder*)ptr_->child(3);
+  ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
+  family_builder_ = reinterpret_cast<arrow::UInt8Builder*>(ptr_->child(0));
+  bits_builder_ = reinterpret_cast<arrow::UInt8Builder*>(ptr_->child(1));
+  is_cidr_builder_ = reinterpret_cast<arrow::BooleanBuilder*>(ptr_->child(2));
+  ipaddr_builder_ = reinterpret_cast<arrow::BinaryBuilder*>(ptr_->child(3));
 }
 
 arrow::Status InetBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  ARROW_RETURN_NOT_OK(ptr_->Append());
+  ARROW_RETURN_NOT_OK(family_builder_->Append(sb.ReadUInt8()));
+  ARROW_RETURN_NOT_OK(bits_builder_->Append(sb.ReadUInt8()));
+  ARROW_RETURN_NOT_OK(is_cidr_builder_->Append(sb.ReadUInt8() != 0));
+  int8_t size = sb.ReadUInt8();
+  if (size > -1) {
+    ARROW_RETURN_NOT_OK(ipaddr_builder_->Append(sb.ReadBinary(size), size));
   }
-
-  auto status = ptr_->Append();
-
-  status = family_builder_->Append(sb.ReadUInt8());
-  status = bits_builder_->Append(sb.ReadUInt8());
-  status = is_cidr_builder_->Append(sb.ReadUInt8() != 0);
-  int8_t nb = sb.ReadUInt8();
-
-  if (nb > -1) {
-    auto value = sb.ReadBinary(nb);
-    status = ipaddr_builder_->Append(value, nb);
-  }
-
-  return status;
+  return arrow::Status::OK();
 }
 
 }  // namespace pgeon

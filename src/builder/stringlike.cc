@@ -27,14 +27,11 @@ BinaryBuilder::BinaryBuilder(const SqlTypeInfo& info, const UserOptions&) {
 
 arrow::Status BinaryBuilder::Append(StreamBuffer& sb) {
   int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
-  }
+  if (len == -1) return ptr_->AppendNull();
 
   auto value = sb.ReadBinary(len);
-  auto status = binary_ptr_ != nullptr ? binary_ptr_->Append(value, len)
-                                       : fixed_size_binary_ptr_->Append(value);
-  return status;
+  return binary_ptr_ != nullptr ? binary_ptr_->Append(value, len)
+                                : fixed_size_binary_ptr_->Append(value);
 }
 
 JsonbBuilder::JsonbBuilder(const SqlTypeInfo& info, const UserOptions&) {
@@ -44,11 +41,10 @@ JsonbBuilder::JsonbBuilder(const SqlTypeInfo& info, const UserOptions&) {
 
 arrow::Status JsonbBuilder::Append(StreamBuffer& sb) {
   int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
-  }
+  if (len == -1) return ptr_->AppendNull();
 
   const char* buf = sb.ReadBinary(len);
+  // First byte is format number
   return ptr_->Append(buf + 1, len - 1);
 }
 
@@ -58,36 +54,28 @@ HstoreBuilder::HstoreBuilder(const SqlTypeInfo& info, const UserOptions&) {
                          arrow::map(arrow::utf8(), arrow::utf8()), &arrow_builder_);
 
   ptr_ = reinterpret_cast<arrow::MapBuilder*>(arrow_builder_.get());
-  key_builder_ = (arrow::StringBuilder*)ptr_->key_builder();
-  item_builder_ = (arrow::StringBuilder*)ptr_->item_builder();
+  key_builder_ = reinterpret_cast<arrow::StringBuilder*>(ptr_->key_builder());
+  item_builder_ = reinterpret_cast<arrow::StringBuilder*>(ptr_->item_builder());
 }
 
 arrow::Status HstoreBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
-  if (len == -1) {
-    return ptr_->AppendNull();
-  }
-
-  auto status = ptr_->Append();
+  APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
+  ARROW_RETURN_NOT_OK(ptr_->Append());
 
   int32_t pcount = sb.ReadInt32();
   int32_t flen;
   for (int32_t i = 0; i < pcount; i++) {
     flen = sb.ReadInt32();
-
-    auto value = sb.ReadBinary(flen);
-    status = key_builder_->Append(value, flen);
+    ARROW_RETURN_NOT_OK(key_builder_->Append(sb.ReadBinary(flen), flen));
 
     flen = sb.ReadInt32();
     if (flen > -1) {
-      auto value = sb.ReadBinary(flen);
-      status = item_builder_->Append(value, flen);
+      ARROW_RETURN_NOT_OK(item_builder_->Append(sb.ReadBinary(flen), flen));
     } else {
-      status = item_builder_->AppendNull();
+      ARROW_RETURN_NOT_OK(item_builder_->AppendNull());
     }
   }
-
-  return status;
+  return arrow::Status::OK();
 }
 
 }  // namespace pgeon

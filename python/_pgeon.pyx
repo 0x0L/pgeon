@@ -6,7 +6,8 @@ from cython.operator cimport dereference as deref
 from libcpp.memory cimport shared_ptr, unique_ptr
 
 from pyarrow.lib cimport (
-    _Weakrefable, c_bool, check_status, CStatus, CTable, move, pyarrow_wrap_table
+    _Weakrefable, CResult, CStatus, CTable, GetResultValue,
+    c_bool, check_status, move, pyarrow_wrap_table
 )
 
 import pyarrow
@@ -26,7 +27,8 @@ cdef extern from "pgeon.h" namespace "pgeon":
 
         CStatus Validate()
 
-    cdef shared_ptr[CTable] CopyQuery(const char* conninfo, const char* query, CUserOptions options) nogil
+    cdef CResult[shared_ptr[CTable]] CopyQuery(
+        const char* conninfo, const char* query, CUserOptions options) nogil
 
 
 cdef class UserOptions(_Weakrefable):
@@ -169,7 +171,7 @@ def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> p
     enc_query = query.encode('utf8')
 
     cdef:
-        shared_ptr[CTable] tbl
+        CResult[shared_ptr[CTable]] table
         const char* c_conninfo = enc_conninfo
         const char* c_query = enc_query
         CUserOptions c_options
@@ -177,6 +179,6 @@ def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> p
     _get_user_options(user_options, &c_options)
 
     with nogil:
-        tbl = CopyQuery(c_conninfo, c_query, c_options)
+        table = CopyQuery(c_conninfo, c_query, c_options)
 
-    return pyarrow_wrap_table(tbl)
+    return pyarrow_wrap_table(GetResultValue(table))

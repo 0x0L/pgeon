@@ -20,7 +20,7 @@ class TableBuilder {
 
   arrow::Status Append(StreamBuffer&);
 
-  std::shared_ptr<arrow::Table> Flush();
+  arrow::Result<std::shared_ptr<arrow::Table>> Flush();
 };
 
 }  // namespace pgeon
