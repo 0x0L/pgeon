@@ -53,7 +53,7 @@ extra_objects = [
 
 libraries = ["pgeon_cpp"] + pa.get_libraries()
 if sys.platform == "win32":
-    libraries.extend(["libpq", "Ws_32"])
+    libraries.extend(["libpq", "Ws2_32"])
 else:
     libraries.append("pq")
 
