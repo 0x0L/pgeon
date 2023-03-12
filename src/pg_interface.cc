@@ -1,14 +1,8 @@
 // Copyright 2022 nullptr
 
-#include <libpq-fe.h>
-
-#include <iostream>
-#include <string>
-#include <tuple>
-#include <vector>
+#include "pg_interface.h"
 
 #include "builder.h"
-#include "pg_interface.h"
 
 namespace pgeon {
 
@@ -34,7 +28,6 @@ arrow::Result<std::shared_ptr<ColumnVector>> ColumnTypesForQuery(PGconn* conn,
     Oid oid = PQftype(res, i);
     int mod = PQfmod(res, i);
     fields[i] = {name, oid, mod};
-    // std::cout << "field " << name << " len " << PQfsize(res, i) << std::endl;
   }
 
   PQclear(res);
@@ -97,9 +90,8 @@ arrow::Result<std::shared_ptr<ArrayBuilder>> MakeColumnBuilder(
   int typlen = atoi(PQgetvalue(res, 0, 3));
   PQclear(res);
 
-  SqlTypeInfo sql_info{.typreceive = typreceive, .typmod = mod, .typlen = typlen};
-
   std::shared_ptr<ArrayBuilder> builder;
+  SqlTypeInfo sql_info{.typreceive = typreceive, .typmod = mod, .typlen = typlen};
   if (typreceive == "anyarray_recv" || typreceive == "anycompatiblearray_recv" ||
       typreceive == "array_recv") {
     ARROW_ASSIGN_OR_RAISE(builder, MakeColumnBuilder(conn, typelem, mod, options));

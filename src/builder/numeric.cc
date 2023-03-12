@@ -1,9 +1,8 @@
 // Copyright 2022 nullptr
 
-#include <memory>
+#include "builder/numeric.h"
 
 #include "builder/common.h"
-#include "builder/numeric.h"
 
 namespace pgeon {
 
@@ -50,9 +49,9 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
   const char* buf = sb.ReadBinary(len);
   auto rawdata = reinterpret_cast<const _NumericHelper*>(buf);
 
-  int16_t ndigits = ntoh16(rawdata->ndigits);
-  int16_t weight = ntoh16(rawdata->weight);
-  int16_t sign = ntoh16(rawdata->sign);
+  int16_t ndigits = ntohs(rawdata->ndigits);
+  int16_t weight = ntohs(rawdata->weight);
+  int16_t sign = ntohs(rawdata->sign);
   int16_t scale = scale_;  // ntoh16(rawdata->dscale);
 
   arrow::Decimal128 value = 0;
@@ -64,7 +63,7 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
 
   /* makes integer portion first */
   for (d = 0; d <= weight; d++) {
-    dig = (d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
+    dig = (d < ndigits) ? ntohs(rawdata->digits[d]) : 0;
     if (dig < 0 || dig >= NBASE)
       return arrow::Status::IOError("[numeric] digit is out of range");
     value = NBASE * value + dig;
@@ -72,7 +71,7 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
 
   /* makes floating point portion if any */
   while (scale > 0) {
-    dig = (d >= 0 && d < ndigits) ? ntoh16(rawdata->digits[d]) : 0;
+    dig = (d >= 0 && d < ndigits) ? ntohs(rawdata->digits[d]) : 0;
     if (dig < 0 || dig >= NBASE)
       return arrow::Status::IOError("[numeric] digit is out of range");
 

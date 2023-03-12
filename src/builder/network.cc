@@ -1,6 +1,7 @@
 // Copyright 2022 nullptr
 
 #include "builder/network.h"
+
 #include "builder/common.h"
 
 namespace pgeon {

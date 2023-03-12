@@ -1,9 +1,8 @@
 // Copyright 2022 nullptr
 
-#include <memory>
+#include "builder/text_search.h"
 
 #include "builder/common.h"
-#include "builder/text_search.h"
 
 namespace pgeon {
 

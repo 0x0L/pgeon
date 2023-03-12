@@ -1,18 +1,17 @@
 // Copyright 2022 nullptr
 
 #include "table_builder.h"
-#include "util/hton.h"
 
 namespace pgeon {
 
 TableBuilder::TableBuilder(const FieldVector& fields) : fields_(fields) {
-  arrow::FieldVector schema;
+  arrow::FieldVector arrow_fields;
   for (auto& f : fields) {
     auto& [name, builder] = f;
     builders_.push_back(builder.get());
-    schema.push_back(arrow::field(name, builder->type()));
+    arrow_fields.push_back(arrow::field(name, builder->type()));
   }
-  schema_ = arrow::schema(schema);
+  schema_ = arrow::schema(arrow_fields);
 }
 
 arrow::Status TableBuilder::Append(StreamBuffer& sb) {
@@ -32,9 +31,7 @@ arrow::Result<std::shared_ptr<arrow::Table>> TableBuilder::Flush() {
     ARROW_ASSIGN_OR_RAISE(array, builders_[i]->Flush());
     arrays[i] = array;
   }
-
-  auto batch = arrow::Table::Make(schema_, arrays);
-  return batch;
+  return arrow::Table::Make(schema_, arrays);
 }
 
 }  // namespace pgeon

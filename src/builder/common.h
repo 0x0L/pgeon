@@ -2,11 +2,7 @@
 
 #pragma once
 
-#include <cmath>
-#include <memory>
-
 #include "builder/base.h"
-#include "util/hton.h"
 
 #define APPEND_AND_RETURN_IF_EMPTY(sb, ptr) \
   do {                                      \
@@ -48,17 +44,11 @@ struct Int64Recv {
 };
 
 struct Float32Recv {
-  static inline float recv(StreamBuffer& sb) {
-    auto x = sb.ReadBinary(4);
-    return unpack_float(x);
-  }
+  static inline float recv(StreamBuffer& sb) { return sb.ReadFloat32(); }
 };
 
 struct Float64Recv {
-  static inline double recv(StreamBuffer& sb) {
-    auto x = sb.ReadBinary(8);
-    return unpack_double(x);
-  }
+  static inline double recv(StreamBuffer& sb) { return sb.ReadFloat64(); }
 };
 
 template <class BuilderT, typename RecvT>

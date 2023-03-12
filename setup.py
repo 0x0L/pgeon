@@ -58,6 +58,7 @@ extensions = [
         name="pgeon._pgeon",
         sources=["python/_pgeon.pyx"],
         language="c++",
+        define_macros=macros,
         include_dirs=[include_dir, np.get_include(), pa.get_include()],
         libraries=["pgeon_cpp", pg_lib] + pa.get_libraries(),
         library_dirs=pg_libdir + pa.get_library_dirs(),

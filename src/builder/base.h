@@ -4,13 +4,13 @@
 
 #include <pgeon.h>
 
-#include "util/streambuffer.h"
-
 #include <map>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "util/streambuffer.h"
 
 namespace pgeon {
 

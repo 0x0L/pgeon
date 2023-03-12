@@ -1,9 +1,5 @@
 // Copyright 2022 nullptr
 
-#include <map>
-#include <string>
-
-#include <arrow/api.h>
 #include "builder.h"
 
 #include "builder/common.h"
