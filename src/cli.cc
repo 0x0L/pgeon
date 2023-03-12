@@ -1,10 +1,10 @@
 // Copyright 2022 nullptr
 
-#include <pgeon.h>
-#include <iostream>
-
 #include <arrow/io/api.h>
 #include <parquet/arrow/writer.h>
+#include <pgeon.h>
+
+#include <iostream>
 
 int main(int argc, char const* argv[]) {
   if ((argc != 3) && (argc != 4)) {

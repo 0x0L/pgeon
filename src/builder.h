@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include "builder/base.h"
 
 namespace pgeon {

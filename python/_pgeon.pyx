@@ -160,7 +160,7 @@ cdef _get_user_options(UserOptions user_options, CUserOptions* out):
         out[0] = deref(user_options.options)
 
 
-def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> pyarrow.Table:
+def copy_query(conninfo : str, query : str, options: UserOptions=None) -> pyarrow.Table:
     """Perform a query using the COPY interface
 
     Parameters
@@ -171,7 +171,7 @@ def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> p
     query : str
         The SQL query
 
-    user_options : UserOptions, optional
+    options : UserOptions, optional
         User options
 
     Returns
@@ -188,7 +188,7 @@ def copy_query(conninfo : str, query : str, user_options: UserOptions=None) -> p
         const char* c_query = enc_query
         CUserOptions c_options
 
-    _get_user_options(user_options, &c_options)
+    _get_user_options(options, &c_options)
 
     with nogil:
         table = CopyQuery(c_conninfo, c_query, c_options)

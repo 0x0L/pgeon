@@ -20,3 +20,12 @@ def test_bad_query(dsn):
 def test_bad_options():
     with pytest.raises(pa.ArrowInvalid):
         UserOptions(default_numeric_precision=0).validate()
+
+    with pytest.raises(pa.ArrowInvalid):
+        UserOptions(default_numeric_scale=0).validate()
+
+    with pytest.raises(pa.ArrowInvalid):
+        UserOptions(default_numeric_precision=4, default_numeric_scale=6).validate()
+
+    with pytest.raises(pa.ArrowInvalid):
+        UserOptions(monetary_fractional_precision=0).validate()

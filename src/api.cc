@@ -3,8 +3,6 @@
 #include <libpq-fe.h>
 #include <pgeon.h>
 
-#include <iostream>
-
 #include "pg_interface.h"
 
 namespace pgeon {
@@ -16,6 +14,11 @@ arrow::Status UserOptions::Validate() const {
     return arrow::Status::Invalid(
         "UserOptions: default_numeric_precision must be at least 1, got ",
         std::to_string(default_numeric_precision));
+  }
+  if (default_numeric_scale < 1) {
+    return arrow::Status::Invalid(
+        "UserOptions: default_numeric_scale must be at least 1, got ",
+        std::to_string(default_numeric_scale));
   }
   if (default_numeric_scale >= default_numeric_precision) {
     return arrow::Status::Invalid(

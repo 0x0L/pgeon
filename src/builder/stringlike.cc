@@ -1,9 +1,8 @@
 // Copyright 2022 nullptr
 
-#include <memory>
+#include "builder/stringlike.h"
 
 #include "builder/common.h"
-#include "builder/stringlike.h"
 
 namespace pgeon {
 
