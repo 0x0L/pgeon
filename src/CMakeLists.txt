@@ -1,18 +1,18 @@
 add_library(pgeon SHARED)
 
 target_sources(pgeon PRIVATE
-    builder/datetime.cc
-    builder/geometric.cc
-    builder/misc.cc
-    builder/nested.cc
-    builder/network.cc
-    builder/numeric.cc
-    builder/stringlike.cc
-    builder/text_search.cc
-    builder.cc
-    table_builder.cc
-    pg_interface.cc
-    api.cc
+    pgeon/builder/datetime.cc
+    pgeon/builder/geometric.cc
+    pgeon/builder/misc.cc
+    pgeon/builder/nested.cc
+    pgeon/builder/network.cc
+    pgeon/builder/numeric.cc
+    pgeon/builder/stringlike.cc
+    pgeon/builder/text_search.cc
+    pgeon/builder.cc
+    pgeon/table_builder.cc
+    pgeon/pg_interface.cc
+    pgeon/api.cc
 )
 
 target_include_directories(pgeon PUBLIC ../include)

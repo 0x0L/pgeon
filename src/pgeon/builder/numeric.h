@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include "pgeon/builder/base.h"
 
 namespace pgeon {
 
@@ -14,7 +14,7 @@ class NumericBuilder : public ArrayBuilder {
 
  public:
   NumericBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class MonetaryBuilder : public ArrayBuilder {
@@ -25,7 +25,7 @@ class MonetaryBuilder : public ArrayBuilder {
 
  public:
   MonetaryBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 }  // namespace pgeon

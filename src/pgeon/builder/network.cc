@@ -1,12 +1,12 @@
 // Copyright 2022 nullptr
 
-#include "builder/network.h"
+#include "pgeon/builder/network.h"
 
-#include "builder/common.h"
+#include "pgeon/builder/common.h"
 
 namespace pgeon {
 
-InetBuilder::InetBuilder(const SqlTypeInfo& info, const UserOptions&) {
+InetBuilder::InetBuilder(const SqlTypeInfo&, const UserOptions&) {
   static const auto& type = arrow::struct_({
       arrow::field("family", arrow::uint8()),
       arrow::field("bits", arrow::uint8()),
@@ -22,15 +22,15 @@ InetBuilder::InetBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ipaddr_builder_ = reinterpret_cast<arrow::BinaryBuilder*>(ptr_->child(3));
 }
 
-arrow::Status InetBuilder::Append(StreamBuffer& sb) {
+arrow::Status InetBuilder::Append(StreamBuffer* sb) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
   ARROW_RETURN_NOT_OK(ptr_->Append());
-  ARROW_RETURN_NOT_OK(family_builder_->Append(sb.ReadUInt8()));
-  ARROW_RETURN_NOT_OK(bits_builder_->Append(sb.ReadUInt8()));
-  ARROW_RETURN_NOT_OK(is_cidr_builder_->Append(sb.ReadUInt8() != 0));
-  int8_t size = sb.ReadUInt8();
+  ARROW_RETURN_NOT_OK(family_builder_->Append(sb->ReadUInt8()));
+  ARROW_RETURN_NOT_OK(bits_builder_->Append(sb->ReadUInt8()));
+  ARROW_RETURN_NOT_OK(is_cidr_builder_->Append(sb->ReadUInt8() != 0));
+  int8_t size = sb->ReadUInt8();
   if (size > -1) {
-    ARROW_RETURN_NOT_OK(ipaddr_builder_->Append(sb.ReadBinary(size), size));
+    ARROW_RETURN_NOT_OK(ipaddr_builder_->Append(sb->ReadBinary(size), size));
   }
   return arrow::Status::OK();
 }

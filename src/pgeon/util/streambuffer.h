@@ -71,7 +71,7 @@ class StreamBuffer {
   const char* buffer_;
 
  public:
-  StreamBuffer(const char* buffer) : buffer_(buffer) {}
+  explicit StreamBuffer(const char* buffer) : buffer_(buffer) {}
 
   inline const char* ReadBinary(size_t n) {
     const char* buf = buffer_;

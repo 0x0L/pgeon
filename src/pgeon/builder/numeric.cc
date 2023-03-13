@@ -1,8 +1,10 @@
 // Copyright 2022 nullptr
 
-#include "builder/numeric.h"
+#include "pgeon/builder/numeric.h"
 
-#include "builder/common.h"
+#include <memory>
+
+#include "pgeon/builder/common.h"
 
 namespace pgeon {
 
@@ -42,11 +44,11 @@ NumericBuilder::NumericBuilder(const SqlTypeInfo& info, const UserOptions& optio
   ptr_ = reinterpret_cast<arrow::Decimal128Builder*>(arrow_builder_.get());
 }
 
-arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
+arrow::Status NumericBuilder::Append(StreamBuffer* sb) {
+  int32_t len = sb->ReadInt32();
   if (len == -1) return ptr_->AppendNull();
 
-  const char* buf = sb.ReadBinary(len);
+  const char* buf = sb->ReadBinary(len);
   auto rawdata = reinterpret_cast<const _NumericHelper*>(buf);
 
   int16_t ndigits = ntohs(rawdata->ndigits);
@@ -94,7 +96,7 @@ arrow::Status NumericBuilder::Append(StreamBuffer& sb) {
   return ptr_->Append(value);
 }
 
-MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo& info, const UserOptions& options) {
+MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo&, const UserOptions& options) {
   precision_ = options.default_numeric_precision;
   scale_ = options.monetary_fractional_precision;
 
@@ -103,13 +105,13 @@ MonetaryBuilder::MonetaryBuilder(const SqlTypeInfo& info, const UserOptions& opt
   ptr_ = reinterpret_cast<arrow::Decimal128Builder*>(arrow_builder_.get());
 }
 
-arrow::Status MonetaryBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
+arrow::Status MonetaryBuilder::Append(StreamBuffer* sb) {
+  int32_t len = sb->ReadInt32();
   if (len == -1) {
     return ptr_->AppendNull();
   }
 
-  arrow::Decimal128 value = sb.ReadInt64();
+  arrow::Decimal128 value = sb->ReadInt64();
   return ptr_->Append(value);
 }
 

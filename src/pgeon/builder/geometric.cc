@@ -1,12 +1,12 @@
 // Copyright 2022 nullptr
 
-#include "builder/geometric.h"
+#include "pgeon/builder/geometric.h"
 
-#include "builder/common.h"
+#include "pgeon/builder/common.h"
 
 namespace pgeon {
 
-inline arrow::Status AppendFlatDoubleHelper(StreamBuffer& sb, arrow::StructBuilder* ptr) {
+inline arrow::Status AppendFlatDoubleHelper(StreamBuffer* sb, arrow::StructBuilder* ptr) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr);
   ARROW_RETURN_NOT_OK(ptr->Append());
   for (int i = 0; i < ptr->num_children(); i++) {
@@ -16,7 +16,7 @@ inline arrow::Status AppendFlatDoubleHelper(StreamBuffer& sb, arrow::StructBuild
   return arrow::Status::OK();
 }
 
-PointBuilder::PointBuilder(const SqlTypeInfo& info, const UserOptions&) {
+PointBuilder::PointBuilder(const SqlTypeInfo&, const UserOptions&) {
   static const auto& type = arrow::struct_({
       arrow::field("x", arrow::float64()),
       arrow::field("y", arrow::float64()),
@@ -26,11 +26,11 @@ PointBuilder::PointBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
 }
 
-arrow::Status PointBuilder::Append(StreamBuffer& sb) {
+arrow::Status PointBuilder::Append(StreamBuffer* sb) {
   return AppendFlatDoubleHelper(sb, ptr_);
 }
 
-LineBuilder::LineBuilder(const SqlTypeInfo& info, const UserOptions&) {
+LineBuilder::LineBuilder(const SqlTypeInfo&, const UserOptions&) {
   static const auto& type = arrow::struct_({
       arrow::field("A", arrow::float64()),
       arrow::field("B", arrow::float64()),
@@ -41,11 +41,11 @@ LineBuilder::LineBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
 }
 
-arrow::Status LineBuilder::Append(StreamBuffer& sb) {
+arrow::Status LineBuilder::Append(StreamBuffer* sb) {
   return AppendFlatDoubleHelper(sb, ptr_);
 }
 
-BoxBuilder::BoxBuilder(const SqlTypeInfo& info, const UserOptions&) {
+BoxBuilder::BoxBuilder(const SqlTypeInfo&, const UserOptions&) {
   static const auto& type = arrow::struct_({
       arrow::field("x1", arrow::float64()),
       arrow::field("y1", arrow::float64()),
@@ -57,11 +57,11 @@ BoxBuilder::BoxBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
 }
 
-arrow::Status BoxBuilder::Append(StreamBuffer& sb) {
+arrow::Status BoxBuilder::Append(StreamBuffer* sb) {
   return AppendFlatDoubleHelper(sb, ptr_);
 }
 
-CircleBuilder::CircleBuilder(const SqlTypeInfo& info, const UserOptions&) {
+CircleBuilder::CircleBuilder(const SqlTypeInfo&, const UserOptions&) {
   static const auto& type = arrow::struct_({
       arrow::field("x", arrow::float64()),
       arrow::field("y", arrow::float64()),
@@ -72,11 +72,11 @@ CircleBuilder::CircleBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
 }
 
-arrow::Status CircleBuilder::Append(StreamBuffer& sb) {
+arrow::Status CircleBuilder::Append(StreamBuffer* sb) {
   return AppendFlatDoubleHelper(sb, ptr_);
 }
 
-PathBuilder::PathBuilder(const SqlTypeInfo& info, const UserOptions&) {
+PathBuilder::PathBuilder(const SqlTypeInfo&, const UserOptions&) {
   static const auto& type =
       arrow::struct_({arrow::field("closed", arrow::boolean()),
                       arrow::field("points", arrow::list(arrow::struct_({
@@ -94,12 +94,12 @@ PathBuilder::PathBuilder(const SqlTypeInfo& info, const UserOptions&) {
   y_builder_ = reinterpret_cast<arrow::DoubleBuilder*>(point_builder_->child(1));
 }
 
-arrow::Status PathBuilder::Append(StreamBuffer& sb) {
+arrow::Status PathBuilder::Append(StreamBuffer* sb) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
   ARROW_RETURN_NOT_OK(ptr_->Append());
   ARROW_RETURN_NOT_OK(is_closed_builder_->Append(BoolRecv::recv(sb)));
 
-  int32_t npts = sb.ReadInt32();
+  int32_t npts = sb->ReadInt32();
   ARROW_RETURN_NOT_OK(point_list_builder_->Append());
   for (int32_t i = 0; i < npts; i++) {
     ARROW_RETURN_NOT_OK(point_builder_->Append());
@@ -109,7 +109,7 @@ arrow::Status PathBuilder::Append(StreamBuffer& sb) {
   return arrow::Status::OK();
 }
 
-PolygonBuilder::PolygonBuilder(const SqlTypeInfo& info, const UserOptions&) {
+PolygonBuilder::PolygonBuilder(const SqlTypeInfo&, const UserOptions&) {
   static const auto& type = arrow::list(arrow::struct_({
       arrow::field("x", arrow::float64()),
       arrow::field("y", arrow::float64()),
@@ -122,10 +122,10 @@ PolygonBuilder::PolygonBuilder(const SqlTypeInfo& info, const UserOptions&) {
   y_builder_ = reinterpret_cast<arrow::DoubleBuilder*>(point_builder_->child(1));
 }
 
-arrow::Status PolygonBuilder::Append(StreamBuffer& sb) {
+arrow::Status PolygonBuilder::Append(StreamBuffer* sb) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
   ARROW_RETURN_NOT_OK(ptr_->Append());
-  int32_t npts = sb.ReadInt32();
+  int32_t npts = sb->ReadInt32();
   for (int32_t i = 0; i < npts; i++) {
     ARROW_RETURN_NOT_OK(point_builder_->Append());
     ARROW_RETURN_NOT_OK(x_builder_->Append(Float64Recv::recv(sb)));

@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include "pgeon/builder/base.h"
 
 namespace pgeon {
 
@@ -15,7 +15,7 @@ class TsVectorBuilder : public ArrayBuilder {
 
  public:
   TsVectorBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class TsQueryBuilder : public ArrayBuilder {
@@ -31,7 +31,7 @@ class TsQueryBuilder : public ArrayBuilder {
 
  public:
   TsQueryBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 }  // namespace pgeon

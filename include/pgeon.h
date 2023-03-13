@@ -24,14 +24,16 @@
 
 #include <arrow/api.h>
 
+#include <memory>
+
 namespace pgeon {
 
 struct UserOptions {
   bool string_as_dictionaries = false;
-  // TODO max precision of 128 decimal ?
+  // TODO(xav) max precision of 128 decimal ?
   int default_numeric_precision = 22;
   int default_numeric_scale = 6;
-  // TODO lc_monetary
+  // TODO(xav) lc_monetary
   int monetary_fractional_precision = 2;
 
   static UserOptions Defaults();

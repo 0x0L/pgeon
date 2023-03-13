@@ -1,12 +1,12 @@
 // Copyright 2022 nullptr
 
-#include "builder/text_search.h"
+#include "pgeon/builder/text_search.h"
 
-#include "builder/common.h"
+#include "pgeon/builder/common.h"
 
 namespace pgeon {
 
-TsVectorBuilder::TsVectorBuilder(const SqlTypeInfo& info, const UserOptions&) {
+TsVectorBuilder::TsVectorBuilder(const SqlTypeInfo&, const UserOptions&) {
   auto status = arrow::MakeBuilder(arrow::default_memory_pool(),
                                    arrow::map(arrow::utf8(), arrow::list(arrow::int32())),
                                    &arrow_builder_);
@@ -17,27 +17,27 @@ TsVectorBuilder::TsVectorBuilder(const SqlTypeInfo& info, const UserOptions&) {
   value_builder_ = reinterpret_cast<arrow::Int32Builder*>(item_builder_->value_builder());
 }
 
-arrow::Status TsVectorBuilder::Append(StreamBuffer& sb) {
+arrow::Status TsVectorBuilder::Append(StreamBuffer* sb) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
   ARROW_RETURN_NOT_OK(ptr_->Append());
 
-  int32_t size = sb.ReadInt32();
+  int32_t size = sb->ReadInt32();
   int16_t npos;
   for (int32_t i = 0; i < size; i++) {
-    const char* buf = sb.ReadBinary(1);
+    const char* buf = sb->ReadBinary(1);
     const char* start_buf = buf;
     int16_t flen = 0;
     while (*buf != '\0') {
       flen += 1;
-      buf = sb.ReadBinary(1);
+      buf = sb->ReadBinary(1);
     }
 
     ARROW_RETURN_NOT_OK(key_builder_->Append(start_buf, flen));
 
     ARROW_RETURN_NOT_OK(item_builder_->Append());
-    npos = sb.ReadInt16();
+    npos = sb->ReadInt16();
     for (int16_t j = 0; j < npos; j++) {
-      ARROW_RETURN_NOT_OK(value_builder_->Append(sb.ReadInt16()));
+      ARROW_RETURN_NOT_OK(value_builder_->Append(sb->ReadInt16()));
     }
   }
   return arrow::Status::OK();
@@ -53,7 +53,7 @@ arrow::Status TsVectorBuilder::Append(StreamBuffer& sb) {
 #define OP_PHRASE 4 /* highest code, tsquery_cleanup.c */
 #define OP_COUNT
 
-TsQueryBuilder::TsQueryBuilder(const SqlTypeInfo& info, const UserOptions&) {
+TsQueryBuilder::TsQueryBuilder(const SqlTypeInfo&, const UserOptions&) {
   static const auto& type = arrow::list(arrow::struct_({
       arrow::field("type", arrow::int8()),
       arrow::field("weight", arrow::int8()),
@@ -75,32 +75,32 @@ TsQueryBuilder::TsQueryBuilder(const SqlTypeInfo& info, const UserOptions&) {
   distance_builder_ = reinterpret_cast<arrow::Int16Builder*>(value_builder_->child(5));
 }
 
-arrow::Status TsQueryBuilder::Append(StreamBuffer& sb) {
+arrow::Status TsQueryBuilder::Append(StreamBuffer* sb) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
   ARROW_RETURN_NOT_OK(ptr_->Append());
 
-  int32_t size = sb.ReadInt32();
+  int32_t size = sb->ReadInt32();
   int16_t npos;
   for (int32_t i = 0; i < size; i++) {
     ARROW_RETURN_NOT_OK(value_builder_->Append());
-    int8_t type = sb.ReadUInt8();
+    int8_t type = sb->ReadUInt8();
     switch (type) {
       case QI_VAL: {
-        int8_t weight = sb.ReadUInt8();
-        int8_t prefix = sb.ReadUInt8();
+        int8_t weight = sb->ReadUInt8();
+        int8_t prefix = sb->ReadUInt8();
 
-        const char* buf = sb.ReadBinary(1);
+        const char* buf = sb->ReadBinary(1);
         const char* start_buf = buf;
         int16_t flen = 0;
         while (*buf != '\0') {
           flen += 1;
-          buf = sb.ReadBinary(1);
+          buf = sb->ReadBinary(1);
         }
 
         ARROW_RETURN_NOT_OK(type_builder_->Append(type));
         ARROW_RETURN_NOT_OK(weight_builder_->Append(weight));
         ARROW_RETURN_NOT_OK(prefix_builder_->Append(prefix));
-        ARROW_RETURN_NOT_OK(operand_builder_->Append(start_buf, flen));  // TODO
+        ARROW_RETURN_NOT_OK(operand_builder_->Append(start_buf, flen));  // TODO(xav)
         ARROW_RETURN_NOT_OK(oper_builder_->AppendNull());
         ARROW_RETURN_NOT_OK(distance_builder_->AppendNull());
 
@@ -108,7 +108,7 @@ arrow::Status TsQueryBuilder::Append(StreamBuffer& sb) {
       } break;
 
       case QI_OPR: {
-        int8_t oper = sb.ReadUInt8();
+        int8_t oper = sb->ReadUInt8();
 
         ARROW_RETURN_NOT_OK(type_builder_->Append(type));
         ARROW_RETURN_NOT_OK(weight_builder_->AppendNull());
@@ -117,7 +117,7 @@ arrow::Status TsQueryBuilder::Append(StreamBuffer& sb) {
         ARROW_RETURN_NOT_OK(oper_builder_->Append(oper));
 
         if (oper == OP_PHRASE) {
-          int16_t distance = sb.ReadInt16();
+          int16_t distance = sb->ReadInt16();
           ARROW_RETURN_NOT_OK(distance_builder_->Append(distance));
         } else {
           ARROW_RETURN_NOT_OK(distance_builder_->AppendNull());
@@ -131,7 +131,6 @@ arrow::Status TsQueryBuilder::Append(StreamBuffer& sb) {
         ARROW_RETURN_NOT_OK(operand_builder_->AppendNull());
         ARROW_RETURN_NOT_OK(oper_builder_->AppendNull());
         ARROW_RETURN_NOT_OK(distance_builder_->AppendNull());
-
       } break;
     }
   }

@@ -1,8 +1,10 @@
 // Copyright 2022 nullptr
 
-#include "builder/stringlike.h"
+#include "pgeon/builder/stringlike.h"
 
-#include "builder/common.h"
+#include <memory>
+
+#include "pgeon/builder/common.h"
 
 namespace pgeon {
 
@@ -24,30 +26,30 @@ BinaryBuilder::BinaryBuilder(const SqlTypeInfo& info, const UserOptions&) {
   }
 }
 
-arrow::Status BinaryBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
+arrow::Status BinaryBuilder::Append(StreamBuffer* sb) {
+  int32_t len = sb->ReadInt32();
   if (len == -1) return ptr_->AppendNull();
 
-  auto value = sb.ReadBinary(len);
+  auto value = sb->ReadBinary(len);
   return binary_ptr_ != nullptr ? binary_ptr_->Append(value, len)
                                 : fixed_size_binary_ptr_->Append(value);
 }
 
-JsonbBuilder::JsonbBuilder(const SqlTypeInfo& info, const UserOptions&) {
+JsonbBuilder::JsonbBuilder(const SqlTypeInfo&, const UserOptions&) {
   arrow_builder_ = std::make_unique<arrow::StringBuilder>();
   ptr_ = reinterpret_cast<arrow::StringBuilder*>(arrow_builder_.get());
 }
 
-arrow::Status JsonbBuilder::Append(StreamBuffer& sb) {
-  int32_t len = sb.ReadInt32();
+arrow::Status JsonbBuilder::Append(StreamBuffer* sb) {
+  int32_t len = sb->ReadInt32();
   if (len == -1) return ptr_->AppendNull();
 
-  const char* buf = sb.ReadBinary(len);
+  const char* buf = sb->ReadBinary(len);
   // First byte is format number
   return ptr_->Append(buf + 1, len - 1);
 }
 
-HstoreBuilder::HstoreBuilder(const SqlTypeInfo& info, const UserOptions&) {
+HstoreBuilder::HstoreBuilder(const SqlTypeInfo&, const UserOptions&) {
   auto status =
       arrow::MakeBuilder(arrow::default_memory_pool(),
                          arrow::map(arrow::utf8(), arrow::utf8()), &arrow_builder_);
@@ -57,19 +59,19 @@ HstoreBuilder::HstoreBuilder(const SqlTypeInfo& info, const UserOptions&) {
   item_builder_ = reinterpret_cast<arrow::StringBuilder*>(ptr_->item_builder());
 }
 
-arrow::Status HstoreBuilder::Append(StreamBuffer& sb) {
+arrow::Status HstoreBuilder::Append(StreamBuffer* sb) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
   ARROW_RETURN_NOT_OK(ptr_->Append());
 
-  int32_t pcount = sb.ReadInt32();
+  int32_t pcount = sb->ReadInt32();
   int32_t flen;
   for (int32_t i = 0; i < pcount; i++) {
-    flen = sb.ReadInt32();
-    ARROW_RETURN_NOT_OK(key_builder_->Append(sb.ReadBinary(flen), flen));
+    flen = sb->ReadInt32();
+    ARROW_RETURN_NOT_OK(key_builder_->Append(sb->ReadBinary(flen), flen));
 
-    flen = sb.ReadInt32();
+    flen = sb->ReadInt32();
     if (flen > -1) {
-      ARROW_RETURN_NOT_OK(item_builder_->Append(sb.ReadBinary(flen), flen));
+      ARROW_RETURN_NOT_OK(item_builder_->Append(sb->ReadBinary(flen), flen));
     } else {
       ARROW_RETURN_NOT_OK(item_builder_->AppendNull());
     }

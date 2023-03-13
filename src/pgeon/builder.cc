@@ -1,16 +1,20 @@
 // Copyright 2022 nullptr
 
-#include "builder.h"
+#include "pgeon/builder.h"
 
-#include "builder/common.h"
-#include "builder/datetime.h"
-#include "builder/geometric.h"
-#include "builder/misc.h"
-#include "builder/nested.h"
-#include "builder/network.h"
-#include "builder/numeric.h"
-#include "builder/stringlike.h"
-#include "builder/text_search.h"
+#include <map>
+#include <memory>
+#include <string>
+
+#include "pgeon/builder/common.h"
+#include "pgeon/builder/datetime.h"
+#include "pgeon/builder/geometric.h"
+#include "pgeon/builder/misc.h"
+#include "pgeon/builder/nested.h"
+#include "pgeon/builder/network.h"
+#include "pgeon/builder/numeric.h"
+#include "pgeon/builder/stringlike.h"
+#include "pgeon/builder/text_search.h"
 
 namespace pgeon {
 
@@ -52,7 +56,7 @@ std::map<std::string,
         {"circle_recv", &make<CircleBuilder>},
         {"cstring_recv", &make<BinaryBuilder>},
         {"date_recv", &make<GenericBuilder<arrow::Date32Builder, DateRecv>>},
-        // TODO this probably needs to get done in MakeBuilder
+        // TODO(xav) this probably needs to get done in MakeBuilder
         // {"domain_recv", &make<Builder>},
         {"enum_recv", &make<StringDictionaryBuilder>},
         {"float4recv", &make<FloatBuilder>},

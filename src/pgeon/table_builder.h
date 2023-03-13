@@ -2,7 +2,10 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include <memory>
+#include <vector>
+
+#include "pgeon/builder/base.h"
 
 namespace pgeon {
 
@@ -15,7 +18,7 @@ class TableBuilder {
  public:
   explicit TableBuilder(const FieldVector&);
 
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 
   arrow::Result<std::shared_ptr<arrow::Table>> Flush();
 };

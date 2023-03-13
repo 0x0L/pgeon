@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include <memory>
+
+#include "pgeon/builder/base.h"
 
 namespace pgeon {
 

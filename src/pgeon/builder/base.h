@@ -10,7 +10,7 @@
 #include <utility>
 #include <vector>
 
-#include "util/streambuffer.h"
+#include "pgeon/util/streambuffer.h"
 
 namespace pgeon {
 
@@ -18,7 +18,7 @@ class ArrayBuilder {
  public:
   std::unique_ptr<arrow::ArrayBuilder> arrow_builder_;
   virtual ~ArrayBuilder() = default;
-  virtual arrow::Status Append(StreamBuffer& sb) = 0;
+  virtual arrow::Status Append(StreamBuffer* sb) = 0;
 
   inline std::shared_ptr<arrow::DataType> type() { return arrow_builder_->type(); }
 

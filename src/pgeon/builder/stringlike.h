@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include "pgeon/builder/base.h"
 
 namespace pgeon {
 
@@ -14,7 +14,7 @@ class BinaryBuilder : public ArrayBuilder {
 
  public:
   BinaryBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class JsonbBuilder : public ArrayBuilder {
@@ -23,7 +23,7 @@ class JsonbBuilder : public ArrayBuilder {
 
  public:
   JsonbBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class HstoreBuilder : public ArrayBuilder {
@@ -34,7 +34,7 @@ class HstoreBuilder : public ArrayBuilder {
 
  public:
   HstoreBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 }  // namespace pgeon

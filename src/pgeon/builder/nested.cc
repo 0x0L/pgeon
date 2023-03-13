@@ -1,8 +1,11 @@
 // Copyright 2022 nullptr
+#include "pgeon/builder/nested.h"
 
-#include "builder/nested.h"
+#include <memory>
+#include <utility>
+#include <vector>
 
-#include "builder/common.h"
+#include "pgeon/builder/common.h"
 
 namespace pgeon {
 
@@ -13,17 +16,17 @@ ListBuilder::ListBuilder(const SqlTypeInfo& info, const UserOptions&)
   ptr_ = reinterpret_cast<arrow::ListBuilder*>(arrow_builder_.get());
 }
 
-arrow::Status ListBuilder::Append(StreamBuffer& sb) {
+arrow::Status ListBuilder::Append(StreamBuffer* sb) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
-  int32_t ndim = sb.ReadInt32();
-  int32_t hasnull = sb.ReadInt32();
-  int32_t element_type = sb.ReadInt32();
+  int32_t ndim = sb->ReadInt32();
+  int32_t hasnull = sb->ReadInt32();
+  int32_t element_type = sb->ReadInt32();
 
   // Element will be flattened
   int32_t nitems = 1;
   for (int32_t i = 0; i < ndim; i++) {
-    int32_t dim = sb.ReadInt32();
-    int32_t lb = sb.ReadInt32();
+    int32_t dim = sb->ReadInt32();
+    int32_t lb = sb->ReadInt32();
     nitems *= dim;
   }
 
@@ -51,13 +54,13 @@ StructBuilder::StructBuilder(const SqlTypeInfo& info, const UserOptions&) {
   ptr_ = reinterpret_cast<arrow::StructBuilder*>(arrow_builder_.get());
 }
 
-arrow::Status StructBuilder::Append(StreamBuffer& sb) {
+arrow::Status StructBuilder::Append(StreamBuffer* sb) {
   APPEND_AND_RETURN_IF_EMPTY(sb, ptr_);
   ARROW_RETURN_NOT_OK(ptr_->Append());
-  int32_t validcols = sb.ReadInt32();
+  int32_t validcols = sb->ReadInt32();
   assert(validcols == ncolumns_);
   for (size_t i = 0; i < ncolumns_; i++) {
-    int32_t column_type = sb.ReadInt32();
+    int32_t column_type = sb->ReadInt32();
     ARROW_RETURN_NOT_OK(builders_[i]->Append(sb));
   }
   return arrow::Status::OK();

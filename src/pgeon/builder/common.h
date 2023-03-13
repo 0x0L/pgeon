@@ -2,11 +2,13 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include <memory>
+
+#include "pgeon/builder/base.h"
 
 #define APPEND_AND_RETURN_IF_EMPTY(sb, ptr) \
   do {                                      \
-    int32_t len = sb.ReadInt32();           \
+    int32_t len = sb->ReadInt32();          \
     if (len == -1) {                        \
       return ptr->AppendNull();             \
     }                                       \
@@ -15,40 +17,40 @@
 namespace pgeon {
 
 struct BinaryRecv {
-  static const char* recv(StreamBuffer& sb, size_t len) { return sb.ReadBinary(len); }
+  static const char* recv(StreamBuffer* sb, size_t len) { return sb->ReadBinary(len); }
 };
 
 struct DateRecv {
   static const int32_t kEpoch = 10957;  // 2000-01-01 - 1970-01-01 (days)
-  static inline int32_t recv(StreamBuffer& sb) { return sb.ReadInt32() + kEpoch; }
+  static inline int32_t recv(StreamBuffer* sb) { return sb->ReadInt32() + kEpoch; }
 };
 
 struct BoolRecv {
-  static inline bool recv(StreamBuffer& sb) { return (sb.ReadUInt8() != 0); }
+  static inline bool recv(StreamBuffer* sb) { return (sb->ReadUInt8() != 0); }
 };
 
 struct UInt8Recv {
-  static inline uint8_t recv(StreamBuffer& sb) { return sb.ReadUInt8(); }
+  static inline uint8_t recv(StreamBuffer* sb) { return sb->ReadUInt8(); }
 };
 
 struct Int16Recv {
-  static inline int16_t recv(StreamBuffer& sb) { return sb.ReadInt16(); }
+  static inline int16_t recv(StreamBuffer* sb) { return sb->ReadInt16(); }
 };
 
 struct Int32Recv {
-  static inline int32_t recv(StreamBuffer& sb) { return sb.ReadInt32(); }
+  static inline int32_t recv(StreamBuffer* sb) { return sb->ReadInt32(); }
 };
 
 struct Int64Recv {
-  static inline int64_t recv(StreamBuffer& sb) { return sb.ReadInt64(); }
+  static inline int64_t recv(StreamBuffer* sb) { return sb->ReadInt64(); }
 };
 
 struct Float32Recv {
-  static inline float recv(StreamBuffer& sb) { return sb.ReadFloat32(); }
+  static inline float recv(StreamBuffer* sb) { return sb->ReadFloat32(); }
 };
 
 struct Float64Recv {
-  static inline double recv(StreamBuffer& sb) { return sb.ReadFloat64(); }
+  static inline double recv(StreamBuffer* sb) { return sb->ReadFloat64(); }
 };
 
 template <class BuilderT, typename RecvT>
@@ -62,10 +64,10 @@ class GenericBuilder : public ArrayBuilder {
     ptr_ = reinterpret_cast<BuilderT*>(arrow_builder_.get());
   }
 
-  arrow::Status Append(StreamBuffer& sb) {
-    int32_t len = sb.ReadInt32();
+  arrow::Status Append(StreamBuffer* sb) {
+    int32_t len = sb->ReadInt32();
     if (len == -1) {
-      // TODO: as an option ?
+      // TODO(xav): as an option ?
       // if constexpr (std::is_base_of<BuilderT, arrow::FloatBuilder>::value ||
       //               std::is_base_of<BuilderT, arrow::DoubleBuilder>::value)
       //   return ptr_->Append(NAN);

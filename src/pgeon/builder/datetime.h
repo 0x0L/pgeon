@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include "pgeon/builder/base.h"
 
 namespace pgeon {
 
@@ -12,7 +12,7 @@ class TimeBuilder : public ArrayBuilder {
 
  public:
   TimeBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class TimeTzBuilder : public ArrayBuilder {
@@ -21,7 +21,7 @@ class TimeTzBuilder : public ArrayBuilder {
 
  public:
   TimeTzBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class TimestampBuilder : public ArrayBuilder {
@@ -30,7 +30,7 @@ class TimestampBuilder : public ArrayBuilder {
 
  public:
   TimestampBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class IntervalBuilder : public ArrayBuilder {
@@ -39,7 +39,7 @@ class IntervalBuilder : public ArrayBuilder {
 
  public:
   IntervalBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 }  // namespace pgeon

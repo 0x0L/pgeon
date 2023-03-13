@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include "pgeon/builder/base.h"
 
 namespace pgeon {
 
@@ -12,7 +12,7 @@ class PointBuilder : public ArrayBuilder {
 
  public:
   PointBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class LineBuilder : public ArrayBuilder {
@@ -21,7 +21,7 @@ class LineBuilder : public ArrayBuilder {
 
  public:
   LineBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class BoxBuilder : public ArrayBuilder {
@@ -30,7 +30,7 @@ class BoxBuilder : public ArrayBuilder {
 
  public:
   BoxBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class CircleBuilder : public ArrayBuilder {
@@ -39,7 +39,7 @@ class CircleBuilder : public ArrayBuilder {
 
  public:
   CircleBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class PathBuilder : public ArrayBuilder {
@@ -53,7 +53,7 @@ class PathBuilder : public ArrayBuilder {
 
  public:
   PathBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class PolygonBuilder : public ArrayBuilder {
@@ -65,7 +65,7 @@ class PolygonBuilder : public ArrayBuilder {
 
  public:
   PolygonBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 }  // namespace pgeon

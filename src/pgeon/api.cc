@@ -3,7 +3,7 @@
 #include <libpq-fe.h>
 #include <pgeon.h>
 
-#include "pg_interface.h"
+#include "pgeon/pg_interface.h"
 
 namespace pgeon {
 

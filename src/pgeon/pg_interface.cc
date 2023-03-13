@@ -1,8 +1,13 @@
 // Copyright 2022 nullptr
 
-#include "pg_interface.h"
+#include "pgeon/pg_interface.h"
 
-#include "builder.h"
+#include <memory>
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include "pgeon/builder.h"
 
 namespace pgeon {
 
@@ -169,7 +174,7 @@ arrow::Status CopyQuery(PGconn* conn, const char* query,
 
   TableBuilder* builder_ = builder.get();
   while (tuple_size > 0) {
-    status = builder_->Append(sb);
+    status = builder_->Append(&sb);
     if (tuple != nullptr) PQfreemem(tuple);
     ARROW_RETURN_NOT_OK(status);
 

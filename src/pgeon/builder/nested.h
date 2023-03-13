@@ -2,7 +2,10 @@
 
 #pragma once
 
-#include "builder/base.h"
+#include <memory>
+#include <vector>
+
+#include "pgeon/builder/base.h"
 
 namespace pgeon {
 
@@ -13,7 +16,7 @@ class ListBuilder : public ArrayBuilder {
 
  public:
   ListBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 class StructBuilder : public ArrayBuilder {
@@ -24,7 +27,7 @@ class StructBuilder : public ArrayBuilder {
 
  public:
   StructBuilder(const SqlTypeInfo&, const UserOptions&);
-  arrow::Status Append(StreamBuffer&);
+  arrow::Status Append(StreamBuffer*);
 };
 
 }  // namespace pgeon

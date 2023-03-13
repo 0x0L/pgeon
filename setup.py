@@ -37,12 +37,12 @@ cflags = {
     "linux": ["-std=c++17"],
 }[sys.platform]
 
-src_files = [str(p) for p in Path("src").glob("**/*.cc") if p.name != "cli.cc"]
+sources = [str(p) for p in Path("src/pgeon").glob("**/*.cc")]
 extra_objects = [
     [
         "pgeon_cpp",
         {
-            "sources": src_files,
+            "sources": sources,
             "include_dirs": include_dirs,
             "language": "c++",
             "macros": macros,

@@ -1,6 +1,6 @@
 // Copyright 2022 nullptr
 
-#include "table_builder.h"
+#include "pgeon/table_builder.h"
 
 namespace pgeon {
 
@@ -14,8 +14,8 @@ TableBuilder::TableBuilder(const FieldVector& fields) : fields_(fields) {
   schema_ = arrow::schema(arrow_fields);
 }
 
-arrow::Status TableBuilder::Append(StreamBuffer& sb) {
-  int16_t nfields = sb.ReadInt16();
+arrow::Status TableBuilder::Append(StreamBuffer* sb) {
+  int16_t nfields = sb->ReadInt16();
   if (nfields == -1) return arrow::Status::OK();
 
   for (int16_t i = 0; i < nfields; i++) {
