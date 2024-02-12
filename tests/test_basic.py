@@ -74,7 +74,7 @@ FROM generate_series(-3.5, 3.5, 1) AS x
         pa.table(
             {
                 "timestamptz": pa.array(["2001-01-01 14:00:00+02:00"]).cast(
-                    pa.timestamp("us", "utc")
+                    pa.timestamp("us", "UTC")
                 )
             }
         ),
