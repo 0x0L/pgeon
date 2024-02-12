@@ -35,7 +35,7 @@ arrow::Status TimeTzBuilder::Append(StreamBuffer* sb) {
 TimestampBuilder::TimestampBuilder(const SqlTypeInfo& info, const UserOptions&) {
   auto type = arrow::timestamp(arrow::TimeUnit::MICRO);
   if (info.typreceive == "timestamptz_recv")
-    type = arrow::timestamp(arrow::TimeUnit::MICRO, "utc");
+    type = arrow::timestamp(arrow::TimeUnit::MICRO, "UTC");
 
   arrow_builder_ =
       std::make_unique<arrow::TimestampBuilder>(type, arrow::default_memory_pool());
